@@ -10,7 +10,7 @@ format:
   commonmark: default
 
 website:
-  twitter-card: true
+  twitter-card: false
   open-graph: true
   repo-actions: [issue]
   navbar:

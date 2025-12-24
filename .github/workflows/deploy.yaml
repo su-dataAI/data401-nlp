@@ -27,3 +27,5 @@ jobs:
 
       - name: Deploy with Quarto
         uses: fastai/workflows/quarto-ghp@master
+        with:
+          version: '3.12'

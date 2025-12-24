@@ -20,4 +20,4 @@ environment if course-specific modules are needed.
 
 | Lab | Colab | GitHub |
 |----|----|----|
-| Intro (Jan 15) | [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?logo=google-colab&style=flat-square.png)](https://colab.research.google.com/) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/) |
+| Intro (Jan 15) | [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?logo=google-colab&style=flat-square.png)](https://colab.research.google.com/github/su-dataAI/data401-nlp/blob/main/nbs/1-intro.ipynb) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/1-intro.ipynb) |

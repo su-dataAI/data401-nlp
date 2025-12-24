@@ -13,10 +13,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
+      - name: Upgrade pip / tools
+        run: python -m pip install --upgrade pip setuptools wheel
 
-      - name: Run nbdev CI workflow
-        uses: fastai/workflows/nbdev-ci@master
+      - name: Install project requirements (including nbdev)
+        run: |
+          pip install -r requirements.txt
+          pip install -U nbdev
+
+      - name: Export notebooks -> library
+        run: nbdev_export
+
+      - name: Install package (editable)
+        run: pip install -e .
+
+      - name: Run tests
+        run: pytest -q

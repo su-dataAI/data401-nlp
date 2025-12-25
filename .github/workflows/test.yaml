@@ -21,6 +21,9 @@ jobs:
           pip install -r requirements.txt
           pip install -U nbdev
 
+      - name: Download NLTK data
+        run: python -m nltk.downloader vader_lexicon
+
       - name: nbdev validation
         run: nbdev_prepare
 

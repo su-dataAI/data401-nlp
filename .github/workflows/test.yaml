@@ -24,6 +24,9 @@ jobs:
       - name: Download NLTK data
         run: python -m nltk.downloader vader_lexicon
 
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
       - name: nbdev validation
         run: nbdev_prepare
 

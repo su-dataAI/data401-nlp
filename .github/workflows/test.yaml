@@ -21,8 +21,8 @@ jobs:
           pip install -r requirements.txt
           pip install -U nbdev
 
-      - name: Export notebooks -> library
-        run: nbdev_export
+      - name: nbdev validation
+        run: nbdev_prepare
 
       - name: Install package (editable)
         run: pip install -e .

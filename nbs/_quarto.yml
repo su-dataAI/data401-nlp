@@ -3,9 +3,11 @@ project:
 
 format:
   html:
-    theme: cosmo
+    theme: flatly
     css: styles.css
     toc: true
+    toc-depth: 4
+    toc-expand: 3
     keep-md: true
   commonmark: default
 

@@ -1,0 +1,1440 @@
+---
+title: ANLY 580 Lab 2
+jupyter: python3
+---
+
+# Exploratory Data Analysis
+*Sept. 8, 2020*
+
+
+## Goals of this lab
+
+- practice constructing your own data set
+- understand how to perform exploratory data analysis (EDA) on unstructured natural language corpora
+- use visualizations to communicate the results of your EDA
+
+## What you should do ***before*** this lab
+
+- Required Reading:  
+    - [NLTK Book Chapter 2](http://www.nltk.org/book/ch02.html)
+
+- Suggested Reading: 
+    - ATAP 2 (Corpus Pre-Processing and Wrangling) 
+
+
+- Watch supplemental videos
+    - [Vaclav Brezina Statistics in Corpus Linguistics](http://corpora.lancs.ac.uk/stats/materials.php)
+    
+
+## Corpus Design and Exploratory Data Analysis (EDA)
+In traditional corpus linguistics, the word *corpus* refers to a sample of language data that strives to be representative of a particular language variety. *Language variety* is a general term for a tranche of language that shares one or more common traits, such as dialect, genre, topic, register, speech community or even modality. Whatever its language variety, a corpus that is designed for the purpose of studying the distributional properties of language phenomena is generally sampled with careful tracking of the demographic and linguistic metadata of the sampled speech.  Similar care is taken to producing high quality annotations that capture human knowledge of the linguistic features of interest, e.g. grammaticality judgements, parts-of-speech, named entity spans, dialog structures, speech acts, sentiment, etc. Thorough annotation and sampling allow for reproducible, high-confidence linguistic studies to be performed against the resulting corpora. Typically, labeling is accomplished using annotation guidelines, and final annotations are subject to rigorous requirements for inter-annotator agreement.  Often, designed corpora come with a great amount of exploratory data analysis already included in the metadata, e.g. the number of sentences, words, average length of elements, etc.
+
+With the advent of ubiquitous machine learning and abundant online data, however, the term corpus in the data science community has come to also refer to collections of text or speech that are assembled with differing degrees of deliberate design in the sampling and labeling. As the utility of academic corpora for model training and testing have become evident, it also has become commonly accepted that careful human annotation of corpora is prohibitively costly and time consuming.  Meanwhile, social media offers seemingly limitless supplies of naturally occurring data.  Under this modern paradigm, the burden is on the data scientis to perform ***exploratory data analysis*** to discover and derive features for use in model building.  When using text or speech to derive answers to data analytic questions, a number of NLP techniques can be employed for describing the demographic and linguistic characteristics woven into the discourse.  In addition to the measurements and counts we introduced in Lab 1, NLP techniques such as parsing, pattern recognition, named entity recognition, and topic analysis might be employed to derive features from unstructured natural language data or to infer labels for the data.  EDA is a necessary first step toward ***feature engineering***, and is particulary relevant when starting with unstructured, unlabeled data sets.  The purpose of this lab is to walk you through some tools and techniques for creating custom data sets and performing EDA.
+
+## The purpose of EDA
+
+Data set building, data analysis and feature engineering are all performed in service of one goal:  answering questions with data.  With that in mind, EDA serves a few purposes:
+
+1. to make sure your dataset is representative of the population or phenomenon under consideration
+    - to make sure that the phenomena you seek are present in the data
+    - to identify and account for outliers or other anomolies
+2. to reveal characteristics of the data that might affect the generalizability or validity of your analysis
+3. do gain insight into features that can be helpful in answering your data analytic questions
+
+## Questions to kick off an EDA
+
+You can start an EDA by asking some fundamental questions, such as:
+
+
+- How can I make sure my data is representative of the people or phenomena I want to describe?
+- Do I have enough data?
+    - e.g. if using a sentiment lexicon, do the words in the lexicon appear often enough to provide a basis for analysis
+- What is the structure of my data?
+    - threaded conversation-like discourse with identifiable speakers
+        - Do I have enough information about the speakers to generalize about them?
+        - Do I have enough text per speaker?
+    - news articles that all start with a summary of new information
+    - academic literature with a keyword list and abstract
+    - sports reports where I might find tables with statistics
+- What metadata is available?
+    - user profiles with demographic information
+    - topic lists
+    - hashtags that might act like topic or discourse labels
+
+- What useful features can I derive from the data?
+    - would grouping the data into topics make sense?
+    - do I need to extract person names or @mentions to answer the question at hand?
+
+## Set up your environment
+
+Install the packages required for this exercise.  Choose the installation method relevant to your setup by selecting the appropriate lines below, or use the package installation method of your choice.  
+
+````
+# run something like this on the console  if you are using your local anly580 conda environment
+conda activate anly580
+conda install -c conda-forge tweepy
+conda install pandas
+conda install -c anaconda nltk
+conda install -c plotly plotly
+
+# run this once for a platform such as deepnote to install necessary packages
+pip install tweepy
+pip install pandas
+pip install nltk
+pip install plotly
+````
+
+#### Install the tweepy gem, which is a Python wrapper for the Twitter API
+
+```{python}
+#| cellUniqueIdByVincent: 9cd32
+#| cell_id: 00006-f2b204aa-9641-415d-8330-87ab27229ddf
+#| tags: []
+pip install tweepy
+```
+
+#### Install NLTK, which we'll use for tokenization
+
+```{python}
+#| cellUniqueIdByVincent: 1bda4
+#| cell_id: 00008-b836e2b3-e27a-4923-84f7-aaaacd51c82c
+#| tags: []
+pip install nltk
+```
+
+```{python}
+#| cellUniqueIdByVincent: '845e3'
+#| cell_id: 00013-49fd5687-ce51-4fed-a2da-727035ab51c9
+#| tags: []
+import nltk
+# you should only have to run this once
+nltk.download('stopwords')
+```
+
+#### Install pandas, which we'll use in the [Visualizing your data](#visdata) section of this lab.
+
+```{python}
+#| cellUniqueIdByVincent: a97a6
+#| cell_id: 00009-5176a952-440e-48a5-921e-dafc947104d5
+#| tags: []
+pip install pandas
+```
+
+```{python}
+#| cellUniqueIdByVincent: 042fc
+#| cell_id: 00015-77ea64d3-9f39-4c13-add6-36e60fde8603
+#| tags: []
+pip install plotly
+```
+
+```{python}
+#| cellUniqueIdByVincent: 2153b
+#| cell_id: 00017-f0e81356-de5d-48a7-844b-e7e11acaddb5
+#| tags: []
+pip install numpy
+```
+
+```{python}
+#| cellUniqueIdByVincent: '85e72'
+#| cell_id: 00018-40bef755-25c4-4e9b-b9c5-536702385db2
+#| tags: []
+pip install matplotlib
+```
+
+## Build your own Twitter data set
+
+### Configure your code for using Twitter
+
+```{python}
+#| cellUniqueIdByVincent: b3e36
+#| cell_id: 00008-4f732a48-23fd-4faa-94e8-b04c3769f448
+#| tags: []
+# Set up your Twitter developer credentials and some helper functions for using Tweepy
+
+import tweepy
+import csv
+import configparser
+
+# If you don't already have one, create a Twitter develer account and app.
+# Request and configure your account at https://apps.twitter.com/app
+# Once you have an account, Twitter will provide the four values you need 
+# to use when accessing Twitter data via its API.
+#
+# This code is set up to read your personal keys and secrets from a configuration file
+# located in the same directory as your running code, i.e. ./twdev.cfg
+# Place the files that twitter provides you into a file called twdev.cfg, in 
+# the following format:
+#
+# [TWITTER]
+# CONSUMER_KEY = your_twitter_dev_key
+# CONSUMER_SECRET = your_twitter_consumer_secret
+# OAUTH_TOKEN = your_access_token
+# OAUTH_TOKEN_SECRET = your_access_token_secret
+
+
+config = configparser.ConfigParser()
+config.read("./twdev.cfg")
+consumer_key = config.get('TWITTER','consumer_key').strip()
+consumer_secret = config.get('TWITTER','consumer_secret').strip()
+access_token = config.get('TWITTER','OAUTH_TOKEN').strip()
+access_token_secret = config.get('TWITTER','OAUTH_TOKEN_SECRET').strip()
+
+# print(consumer_key)
+# print(consumer_secret)
+# print(access_token)
+# print(access_token_secret)
+
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth,wait_on_rate_limit=True)
+
+# pause and wait if you've hit Twitter's rate limit
+# from http://docs.tweepy.org/en/v3.9.0/code_snippet.html
+def limit_handled(cursor):
+    while True:
+        try:
+            yield cursor.next()
+        except tweepy.RateLimitError:
+            time.sleep(15 * 60)
+        except StopIteration:
+            return
+
+# create an outputfile name based on the query you ran
+def get_output_file_name(query_string):
+    file_name = query_string + '.csv'
+    if query_string[0:1] == '#':
+        file_name = query_string[1:len(query_string)] + '_hashtag.csv'
+        file_name = file_name.replace("#","")
+        file_name = file_name.replace(" ","_")
+    return file_name
+```
+
+### Submit a query and write the sample of results to a csv file
+
+```{python}
+#| cellUniqueIdByVincent: c6e07
+#| cell_id: 00006-729ffd84-2b7d-49f4-a6bd-dd5161164dc4
+#| tags: []
+# specify your search term and the maximum number of tweets to return
+query = "#covidhoax"
+max_items = 5000
+
+
+# create an output filename based on the query
+file_name = get_output_file_name(query)
+
+# Open/Create a file to append data
+print("appending to csv file "+file_name)
+csvFile = open(file_name, 'a')
+csvWriter = csv.writer(csvFile)
+
+
+# get the tweets that match your query and write them to a csv file
+for tweet in limit_handled(tweepy.Cursor(api.search,q=query,count=100,
+                           lang="en",
+                           since="2020-01-01").items(max_items)):
+    print (tweet.created_at, tweet.text)
+    csvWriter.writerow([tweet.created_at, tweet.text.encode('utf-8')])
+csvFile.close()
+
+# inform us when you have finished
+print('Done.')
+```
+
+***Discussion:***  Notice that a lot of the data you received in this query are *retweets*.  Unless we have a specific reason for studying retweets, we will alter our search code to filter them out.  Discuss why this might be desirable.
+
+```{python}
+#| cellUniqueIdByVincent: 8c8ad
+#| cell_id: 00014-1dab2074-b298-4435-9996-78916930cd80
+#| tags: []
+# specify your search term and the maximum number of tweets to return
+# determine whether to filter retweets, and whether to overwrite any files with the same name
+# generated from previous queries
+query = "#covidhoax"
+max_items = 5000
+filter_retweets = True
+overwrite_output_file = True
+
+# create a filename based on the query
+file_name = get_output_file_name(query)
+
+# add Twitter query flags if necessary
+if filter_retweets:
+    query = query + " -filter:retweets"
+
+# set the write mode for the file to either add to the file if it exists or
+# to overwrite it and start afresh
+write_mode = 'a'
+if overwrite_output_file:
+    write_mode = 'w'
+
+# Open/Create a file to append data
+print("appending to csv file "+file_name)
+csvFile = open(file_name, write_mode)
+csvWriter = csv.writer(csvFile)
+
+
+# get the tweets that match your query and write them to a csv file
+for tweet in limit_handled(tweepy.Cursor(api.search,q=query,count=100,
+                           lang="en",
+                           since="2020-01-01").items(max_items)):
+    print (tweet.created_at, tweet.text)
+    csvWriter.writerow([tweet.created_at, tweet.text.encode('utf-8')])
+csvFile.close()
+
+# inform us when you have finished
+print('Done.')
+```
+
+### Refine your collection
+Now that you are confident that you can collect a nice sample of Twitter conversation on some topic, where the boundaries of the topic are loosely defined by the presence of a keyword or hashtag, you can start to think about how to explore and characterize the data set using descriptive statistics.  One natural form of analysis for a twitter data set regards the hashtag usage.  While building our data set, we should attempt to anticipate the fields we want in our data frame or data base - in this case we would like access to the hashtags in our data. 
+
+***Tip: *** When you are creating a data set from online sources, it is important to understand the capabilities of the API's you are using to get access to that data.  Knowledge of the structure and metadata offered by the source API might save you from writing a lot of unnecessary code.  For example, knowing that the Twitter _payload_ (data returned from an API call) includes a field called _entities_, which itself is comprised of arrays of hashtags, @mentions and such that Twitter has pre-populated, can save you from having to iterate the tweet text to find them.  In our case, the Tweepy package wraps the Twitter API.  Documentation for Tweepy and for the Twitter API are both relevant to our implementation.
+
+[Tweepy](http://docs.tweepy.org/en/v3.5.0/index.html)
+
+[Twitter API description of Tweet object](https://developer.twitter.com/en/docs/twitter-api/v1/data-dictionary/overview/tweet-object)
+
+*** Explanation: ***  The following code queries Twitter for a specific hashtag, filtering out retweets.  In the process of iterating over the Tweets returned as a result of the query, it calculates a few basic statistics that are easily obtained using Twitter and functions built into Python.  For example:
+
+- number of Tweets retrieved
+- average Tweet length
+- total hashtags
+- unique hashtags
+
+We start by defining a new function that can process the hashtag objects (hashmaps/dictionaries) returned by the Twitter API and turn them into a simple list of strings.
+
+```{python}
+#| cellUniqueIdByVincent: '4e149'
+#| cell_id: 00018-5fa45a0e-f551-415b-bf76-5f9b35a53597
+#| tags: []
+# The hashtags parameter of this function should be an array of hashmaps from Twitter's Tweet object, 
+# where the each hashtag is represented as a dictionary containing the text of the hashtag, the offsets, etc.
+# "entities":
+#{
+#    "hashtags":[{'text': 'MAGA', 'indices': [100, 105]}],
+#    "urls":[],
+#    "user_mentions":[],
+#    "media":[],
+#    "symbols":[]
+#    "polls":[]
+#}
+hashtag_counts = {}
+
+def get_hashtag_text(hashtags):
+    if hashtags == None:
+        return '',0
+    hashtag_string = ''
+    num_hashtags = 0
+    for cur_hash in hashtags or []: 
+        cur_hashtag = cur_hash['text']
+        if num_hashtags > 0:
+            hashtag_string += ' '
+        num_hashtags += 1
+        hashtag_string += cur_hashtag
+        if cur_hashtag in hashtag_counts:
+            hashtag_counts[cur_hashtag] += 1
+        else:
+            hashtag_counts[cur_hashtag] = 1
+    return hashtag_string, num_hashtags
+```
+
+Now we make use of the new function in our old processing pipeline.  
+
+*** Tip: *** While you're testing your functions and perfecting your way of writing out the data, it's sufficient to collect just a few samples.  This will make your development go faster, reduce the amount of data you download unnecessarily and avoid you coming up against rate limits.  Once the collection code works the way you want it to, set the collector to gather as much data as you hope to get.  In our code sample, we can take care of this by altering the value of *max_items*:
+
+```{python}
+#| cellUniqueIdByVincent: a7f48
+#| cell_id: 00016-48073a82-ccc9-4540-b421-ad24be479682
+#| tags: []
+# specify your search term and the maximum number of tweets to return
+# determine whether to filter retweets, and whether to overwrite any files with the same name
+# generated from previous queries
+
+#query = "#covidhoax OR #notomasks"
+#query = "#covidisreal OR #wearamask"
+query = "#covidhoax"
+
+
+max_items = 5000
+filter_retweets = True
+overwrite_output_file = True
+
+# create a filename based on the query
+file_name = get_output_file_name(query)
+
+# add Twitter query flags if necessarytotal
+if filter_retweets:
+    query = query + " -filter:retweets"
+
+write_mode = 'a'
+if overwrite_output_file:
+    write_mode = 'w'
+
+# open/create a file to hold result data
+print('writing output to csv file  '+file_name+'\n')
+csvFile = open(file_name, write_mode)
+csvWriter = csv.writer(csvFile)
+
+# set up some variables to hold counts
+hashtag_counts = {}
+total_hashtags = 0
+num_tweets = 0
+total_tweet_length = 0
+
+# write a header row for your data file
+csvWriter.writerow(["created_date","hashtags", "num_hashtags", "tweet_length", "tweet_text"])
+
+# get the tweets that match your query and write them to a csv file
+for tweet in limit_handled(tweepy.Cursor(api.search,q=query,count=100,
+                           lang="en",
+                           since="2020-01-01").items(max_items)):
+    num_tweets += 1
+    tweet_length = len(tweet.text)
+    total_tweet_length +=tweet_length
+    #print(tweet.entities['hashtags'])
+    hashtag_string, num_hashtags = get_hashtag_text(tweet.entities['hashtags']) 
+    total_hashtags += num_hashtags
+    #print("SYMBOLS:  ",tweet.entities['user_mentions'])            
+    if num_tweets <= 10: 
+        print ('HASHTAGS: ', hashtag_string, "\tTEXT:", tweet.text)
+    csvWriter.writerow([tweet.created_at,hashtag_string, num_hashtags, tweet_length, tweet.text])
+csvFile.close()
+
+# inform us of your results when you have finished
+print('\nResults:')
+print('Tweets: ', num_tweets)
+print('Average tweet length in characters: ', total_tweet_length / num_tweets)
+print('Total hashtags: ', total_hashtags)
+print('Unique hashtags: ',len(hashtag_counts))
+print('Hashtags: ',hashtag_counts.keys())
+```
+
+*** Discussion: *** Do you think a dataset created with a hashtag such as #covidhoax is *representative* of the breadth of conversation on Twitter regarding Covid-19?  Why or why not?  How might you go about expanding coverage of this topic?  In thinking about this, consider how you would address *representativeness* vs. *balance* for some imagined task, such as assessing public sentiment about covid or about wearing masks.
+
+## Explore and describe your data set
+
+
+In the section [Build your own data set]() you learned how to construct a dataset comprised of Tweets and hashtags.  In this section, you will learn about some desriptive statistics that can be used to characterize your data.
+
+Now that you have the basics down for assembling a topical data set from Twitter, and generating basic statistics, let's work in some of the descriptive statistics from NLTK that we looked at in *Lab 1*.  For that, we'll turn back to NLTK. Since we've already written our data set to a file, from now on we'll load our data from that .csv into a pandas dataframe and perform our analyses on that.
+
+```{python}
+#| cellUniqueIdByVincent: a8c48
+#| cell_id: 00030-17ed042b-259d-4fa1-a748-328cfef52bce
+#| tags: []
+import pandas as pd
+df = pd.read_csv('./covidhoax_hashtag.csv')
+list(df.columns)
+```
+
+EDA on unstructured natural language data requires the use of NLP components for converting text into smaller, meaningful units that can be counted.  For specific applications, you might have reasons for choosing different types of textual chunks, but while performaing EDA, you generally should start with the basics, e.g. sentences and words.  NLTK and other such tools such as Spacy provide sentence finding and tokenization.  For this exercise,we will once again use the basic tokenizer provided by NLTK to get some countables from our Twitter dataset.
+
+```{python}
+#| cellUniqueIdByVincent: df2b3
+#| cell_id: 00023-61604d00-cd3e-4f3c-b0a2-b5db1d97d5ab
+#| tags: []
+# import nltk and download the tokenization model called 'punkt'
+import nltk
+nltk.download('punkt')
+```
+
+Now, we add a function that is very similar to the one we made for hashtags.  This function tokenizes a string, and increments the counts for the resulting tokens.
+
+```{python}
+#| cellUniqueIdByVincent: 4d2df
+#| cell_id: 00023-6333c121-2ba6-4d74-a309-12ce25ab1cf9
+#| tags: []
+token_counts = {}
+def get_token_analysis(tweet_text):
+    tokens = nltk.word_tokenize(tweet_text)
+    for token in tokens:
+        if token in token_counts:
+            token_counts[token] += 1
+        else:
+            token_counts[token] = 1
+    return tokens
+```
+
+Now, let's test our function a bit, to be sure it does what we think it should.  The following cell calls the function a couple of times with some test input that presents interesting tokenization challenges.  
+
+***Tip:*** In an *integrated development environment (IDE)* such as [PyCharm](https://www.jetbrains.com/pycharm/) or [VSCode](https://code.visualstudio.com/), a good way to test your functions is by using a unit testing framework such as [pytest](https://docs.pytest.org/en/stable/).  Unit testing not only allows you to make sure your code works as expected when you write it, but also gives you confidence that it continues to work as you alter and improve your code.
+
+```{python}
+#| cellUniqueIdByVincent: 7eceb
+#| cell_id: 00024-eced1d05-661e-433a-9c85-12b96af921b0
+#| tags: []
+# test the function get_token_analysis
+test_tweet = "check out @DoggieSuperStar at www.doggiesuperstar.com - she rocks!  #DogsRule"
+tokens = get_token_analysis(test_tweet)
+print("num_tokens: ", len(tokens), "  ")
+print(tokens)
+
+# test the function get_token_analysis
+test_tweet = "Isn't she super-cool to have a check for at least $42.42 for a rainy_day_fund?!"
+tokens = get_token_analysis(test_tweet)
+print('\n')
+print("num_tokens: ", len(tokens), "  ")
+print(tokens)
+
+# print out the token counts that were generated by get_token_analysis()
+sorted_token_types = sorted(token_counts.items(), key=lambda x:x[1], reverse=True)
+print('\n')
+print("Token counts: ", sorted_token_types)
+```
+
+Notice that this very simple punkt tokenizer from NLTK is not kind to @mention and #hashtags - it splits them apart!  We'll look at more sophisticated approaches to tokenization in Lab 3.  For now, though, we'll use the #hashtags that Twitter provides in its payload and just ignore tokens in the Tweet text that are only punctuation. Let's modify our original statistics to include token counts.
+
+```{python}
+#| cellUniqueIdByVincent: 438a5
+#| cell_id: 00022-63e44c5b-67e0-4af7-a7de-ef01f391babe
+#| tags: []
+# set up some variables to hold total counts
+hashtag_counts = {}
+total_hashtags = 0
+token_counts = {}
+total_tokens = 0
+num_tweets = 0
+total_tweet_length = 0
+
+
+# iterate over the rows in your dataframe, keeping track of various counts
+for row in df.itertuples():
+    num_tweets += 1
+    total_tweet_length += len(row.tweet_text)
+    tokens = get_token_analysis(row.tweet_text)
+    total_tokens += len(tokens)
+    total_hashtags += row.num_hashtags
+    hashtags = str(row.hashtags).split()
+    print(len(tokens), ": ", tokens)
+    print(len(hashtags), ': ', hashtags)
+    # Here, since we're still developing our code, we'll just process 6 rows (rows are zero-indexed)
+    if row.Index == 5:
+       break
+ 
+
+
+# inform us of your results when you have finished, and show some basic descriptive statistics
+print('\nResults:')
+print('Tweets: ', num_tweets)
+print('Total characters: ', total_tweet_length)
+print('Average tweet length in characters: ', total_tweet_length / num_tweets)
+print('Total tokens: ', total_tokens)
+print('Average tweet length in tokens: ', total_tokens / num_tweets)
+sorted_token_types = sorted(token_counts.items(), key=lambda x:x[1], reverse=True)
+print("Token counts: ", sorted_token_types)
+print('Total hashtags: ', total_hashtags)
+
+#print('Unique hashtags: ',len(hashtag_counts))
+#sorted_hashtag_types = sorted(hashtag_counts.items(), key=lambda x:x[1], reverse=True)
+#print('Hashtags: ',hashtag_counts)
+```
+
+Yuck! We were supposed to get rid of the punctuation tokens.  For topical analysis, including the punctuation tokens in the frequency counts might just muddy up our data, making it difficult to see the thematic patterns we're looking for.  Other applications, such as stylistic analysis, can make very good use of the distributional characteristics of punctuation.  In lab 3, we'll talk about some techniques for handling punctuation.  Meanwhile, let's alter our token processing function to filter out punctuation and run this all again.
+
+```{python}
+#| cellUniqueIdByVincent: 72ae2
+#| cell_id: 00029-5e5a86fd-7487-40e5-8510-66e1715f2a9c
+#| tags: []
+token_counts = {}
+def get_token_analysis(tweet_text):
+    tokens = nltk.word_tokenize(tweet_text)
+    for token in tokens:
+        if len(token)>1 or token[0:1].isalnum():
+            if token in token_counts:
+                token_counts[token] += 1
+            else:
+                token_counts[token] = 1
+    return tokens
+```
+
+***Soapbox: *** Preprocessing and tokenization are a vital part of data analysis.  Understanding the behavior of whatever tokenizer you're using is important because it can affect how data is aggregated, searched and counted.  In the function we just re-defined, we added the following line:
+````` 
+if len(token)>1 or token[0:1].isalnum():
+``````
+
+This line says: *if the length of the current token is greater than 1 or the first character of the token is alphanumeric*, then invoke the following block of code to add to the token counts. This is a *heuristic* (approximate solution, possibly sub-optimal) for removing punctuation tokens.  This solution relies on the fact that NLTK's punct tokenizer breaks sequences of punctuation into individual tokens.  So, for example, '!!!' and '?!' will be split into three and two separate tokens, respectively.  Tokenizers that group such punctuation would cause this heuristic to fail.  We will revisit this heuristic in subsequent labs on regular expressions.
+
+Note that without the left-hand side of the *or* condition, tokens such as '.42' would be filtered out.
+
+***Exercise: ***  Try some other input to see whether punctuation such as "......." pass this filter.
+
+```{python}
+#| cellUniqueIdByVincent: 6ba54
+#| cell_id: 00030-a83a967e-ed0b-462b-9032-3611563595ab
+#| tags: []
+total_tokens = 0
+token_counts = {}
+
+# test the new get_token_analysis function
+test_tweet = "check out @DoggieSuperStar at www.doggiesuperstar.com - she rocks!!!  #DogsRule"
+tokens =  get_token_analysis(test_tweet)
+total_tokens += len(tokens)
+print(len(tokens), ': ', tokens)
+
+# test the new get_token_analysis function
+test_tweet = "Isn't she super-cool to have a check for at least $42.42 or even .42 for a rainy_day_fund?!"
+tokens = get_token_analysis(test_tweet)
+total_tokens += len(tokens)
+print(len(tokens), ': ', tokens)
+
+# print out the token type counts in order of reverse frequency
+print('\nTotal tokens: ', total_tokens)
+sorted_token_types = sorted(token_counts.items(), key=lambda x:x[1], reverse=True)
+print("Token counts: ", sorted_token_types)
+```
+
+Before we re-run our analysis over our dataframe, let's create a new method that takes care of adding to our hashtag counts.  Previously in this lab, we counted the hashtags as we were getting the hashtag strings out of the more complex JSON data object provided by Twitter.  We never stored those counts anywhere, so now we need a new method specifically for counting the space-separated hashtag string that we have available in our Pandas dataframe. 
+
+```{python}
+#| cellUniqueIdByVincent: 4ed8f
+#| cell_id: 00043-2ced1a17-fbe1-4043-a472-a2258786a4bc
+#| tags: []
+# method for filtering out annoying not-a-number value
+def isNaN(num):
+    return num != num
+
+hashtag_counts = {}
+
+# break the string into individual hashtags, then add
+# each one to our global hashtag type counts
+
+def get_hashtag_analysis(hashtag_string):
+    if hashtag_string == 'nan' or isNaN(hashtag_string):
+        return []
+    hashtags = hashtag_string.strip().split()
+    for cur_hashtag in hashtags:
+        if cur_hashtag in hashtag_counts:
+            hashtag_counts[cur_hashtag] += 1
+        else:
+            hashtag_counts[cur_hashtag] = 1
+    return hashtags
+```
+
+Now let's try our data set analysis again.  This time, though, instead of printing out our token counts as we iterate over the rows of the dataframe, we'll add the counts to a new columns in the dataframe so we can use them later.
+
+```{python}
+#| cellUniqueIdByVincent: 884ad
+#| cell_id: 00032-f13ef0eb-b1b8-40eb-bd3b-54454a3cca90
+#| tags: []
+# set up some variables to hold total counts
+hashtag_counts = {}
+total_hashtags = 0
+token_counts = {}
+total_tokens = 0
+num_tweets = 0
+total_tweet_length = 0
+
+
+# add a column to the datafram to hold token counts for each tweet
+num_tokens_col = [None] * len(df.index)
+tokens_col = [None] * len(df.index)
+
+# WRITE THE RESULTS OUT TO A NEW FILE?
+# iterate over the rows in your dataframe, calculate some statistics
+for row in df.itertuples():
+    num_tweets += 1
+    total_tweet_length += len(row.tweet_text)
+    tokens = get_token_analysis(row.tweet_text)
+    total_tokens += len(tokens)
+    tokens_col[row.Index] = ' '.join(tokens)
+    num_tokens_col[row.Index] = len(tokens)
+    hash_tag_str = str(row.hashtags)
+    hashtags = get_hashtag_analysis(hash_tag_str)
+    total_hashtags += len(hashtags)
+    #print(row)
+    #if row.Index == 50:
+    #    break
+
+df['num_tokens'] = num_tokens_col
+df['tokens'] = tokens_col
+print("\ndata frame columns:")
+print(list(df.columns))
+#print(df.loc[0,'num_tokens'])
+#print(df.loc[0,'tokens'])
+
+# inform us of your results when you have finished
+print('\nResults:')
+print('Tweets: ', num_tweets)
+print('Total characters: ', total_tweet_length)
+print('Average tweet length in characters: ', total_tweet_length / num_tweets)
+print('Total tokens: ', total_tokens)
+print('Unique tokens: ', len(token_counts))
+print('Average tweet length in tokens: ', total_tokens / num_tweets)
+sorted_token_types = sorted(token_counts.items(), key=lambda x:x[1], reverse=True)
+print("Token counts: ", sorted_token_types)
+
+print('Total hashtags: ', total_hashtags)
+print('Total hashtags (double check): ', df['num_hashtags'].sum())
+print('Unique hashtags: ',len(hashtag_counts))
+print('Average hashtags per Tweet: ', total_hashtags / num_tweets)
+sorted_hashtag_types = sorted(hashtag_counts.items(), key=lambda x:x[1], reverse=True)
+print('Hashtags: ',sorted_hashtag_types)
+```
+
+***Discussion: *** Think about the tokens that you see appearing in this text.  Is further filtering required?  What could the tokenizer do differently or better?  What types of words should be ignored? 
+
+*** Pointer: *** For a quick summary of different ways to iterate over dataframes, see [this geeksforgeeks discussion](https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/).  Note that some techniques are significantly slower than others.  To test questions of speed you can use Python's convenient *timeit* function:
+`````
+timeit print('blah')
+blah
+...
+blah
+blah
+blah
+124 µs ± 4.26 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+
+<a id="visdata"></a>
+
+## Visualizing the descriptive statistics of your data set
+
+When your data set gets a great deal larger, and the number of statistics you track grows, simple listings of frequency counts might not suffice for the purpose of understanding the shape of your data.  This is where your creativity in developing visualizations can come in.
+
+One thing we can easily do, given the word counts we've already assembled, is to create a simple histogram for the frequency distribution of the top words in the corpus.  We already have our token counts sorted in reverse order, so we'll use a popular graphing tool called *plotly* to do the visualizations for us.
+
+```{python}
+#| cellUniqueIdByVincent: 1c0a5
+#| cell_id: 00038-10bd6a70-f7c7-4f35-99d4-542b09b71466
+#| tags: []
+# start by importing plotly
+import plotly
+pd.options.plotting.backend = "plotly"  #the default plotting backend for pandas is matplotlib
+```
+
+### Token Frequency Distributions
+
+```{python}
+#| cellUniqueIdByVincent: 59a77
+#| cell_id: 00053-57ef9ef3-4c9c-4e43-bfb7-0b9e0fb6137b
+#| tags: []
+# It probably won't be practical to visualize all the words in our corpus, so let's start by showing the top 30.
+num_to_plot = 50
+title_text = 'Top %i words in Tweets before removing stop words' % num_to_plot
+
+# Here, we're taking our sorted_token_types, which is an array of tuples, and converting it into a dataframe
+df1 = pd.DataFrame(sorted_token_types[:num_to_plot], columns = ['token' , 'count'])
+
+# Now we just plot it, with tokens on the x axis and counts on the y axis
+df1.plot(x='token', y='count', kind='bar' )
+```
+
+This visualization makes it very easy to see that we need to do something about all of the function words in this text that are high frequency but whose counts don't offer us much information about the contents of the tweets.  
+
+***Spolier alert: *** words that are found with high freqency across all of the documents in a corpus, and which therefore offer little discrimination power, are called *stopwords* and are often removed in the preprocessing stages of NLP applications.  We'll revisit stopwords in more detail in Lab 3.
+
+For now, however, let's use NLTK to just remove tokens it thinks are stopwords for English so we can get a better sense of the themes in this data.  Once we have a function to recognize stopwords, we'll redefine our token counting function to incorporate stopword removal.
+
+```{python}
+#| cellUniqueIdByVincent: 2d2ac
+#| cell_id: 00056-a836685b-f376-49ce-81d0-d8dfe76ef776
+#| tags: []
+# load the English stopword list from NLTK
+from nltk.corpus import stopwords
+stopwords = stopwords.words('english')
+
+# convenience method for checking if a word is included in the stopword list from nltk
+def is_stopword(word):
+    word = word.strip().lower()
+    if word in stopwords:
+        return True
+    return False
+
+
+# quick sanity check to make sure is_stopword works
+# expect the result to be True
+print(is_stopword('TO  '))
+```
+
+Now we have a nice *method*(a.k.a. function) for recognizing stopwords.  We're going to pull out our little punctuation recognition hack (*ahem*, our puunctuation *heuristic*) from the `get_token_analysis` method into its own function, so we can incorprate it into a third function whose whole job is to determine whether a token should be kept or removed from our lovely counts.  We shall call that function `should_count()`.
+
+```{python}
+#| cellUniqueIdByVincent: 5c093
+#| cell_id: 00057-f7dfba36-5960-460e-9a64-90ce37797596
+#| tags: []
+token_counts = {}
+
+# determine whether token should be kept for inclusion in our token counts
+def should_count(token, remove_punct=True, remove_stopwords=True):
+    keep = True
+    if remove_punct and (len(token)==1 or not token[0:1].isalnum()):
+        keep = False
+    elif remove_stopwords and is_stopword(token):
+        keep = False
+    return keep
+```
+
+As usual, let's test our `should_count` function.
+
+```{python}
+#| cellUniqueIdByVincent: 4844f
+#| cell_id: 00059-d6f02487-db3c-4a26-ab3e-38733ff4c666
+#| tags: []
+# let's test our should_keep method
+print(should_count('to'))
+print(should_count('to',remove_stopwords=False))
+print(should_count('@'))
+print(should_count('@',remove_punct=False))
+print(should_count('not'))
+print(should_count('covid'))
+```
+
+Although we definitely shound *not* keep covid, it looks like the function works as intended.  Now we can incorporate it into our `get_token_analysis` function.
+
+```{python}
+#| cellUniqueIdByVincent: f75b3
+#| cell_id: 00059-199c4152-2795-4950-9d23-775c5a8727c0
+#| tags: []
+def get_token_analysis(tweet_text, remove_punct=True, remove_stopwords=True):
+    tokens = nltk.word_tokenize(tweet_text)
+    for token in tokens:
+        if should_count(token, remove_punct, remove_stopwords):
+            if token in token_counts:
+                token_counts[token] += 1
+            else:
+                token_counts[token] = 1
+    return tokens
+```
+
+That was a pretty drastic change to our `get_token_analysis` function, so let's test it again.
+
+```{python}
+#| cellUniqueIdByVincent: 70fb1
+#| cell_id: 00059-6e47f65c-c425-4b43-9dff-543ef24ec343
+#| tags: []
+total_tokens = 0
+token_counts = {}
+
+# test the get_token_analysis method
+test_tweet = "check out @DoggieSuperStar at https://www.doggiesuperstar.com - she rocks!!!  #DogsRule"
+tokens =  get_token_analysis(test_tweet)
+total_tokens += len(tokens)
+print(len(tokens), ': ', tokens)
+
+# test the new get_token_analysis function
+test_tweet = "Isn't she super-cool to have a check for at least $42.42 or even .42 for a rainy_day_fund?!"
+tokens = get_token_analysis(test_tweet)
+total_tokens += len(tokens)
+print(len(tokens), ': ', tokens)
+
+# print the reverse-sorted token counts
+print('\nTotal tokens: ', total_tokens)
+sorted_token_types = sorted(token_counts.items(), key=lambda x:x[1], reverse=True)
+print("Token counts: ", sorted_token_types)
+```
+
+*** Soapbox: *** These token counts are way better with stopwords and punctuation excluded.  Notice, however, that our tokenizer separates off *n't* from words like *isn't* and *couldn't*.  That's definitely good (unless you're studying bound negative clitics, of course), but what is *not* good is that the stopword list includes *not* but does not include *n't*, essentially two different forms of the very same word.  Always remember that these seemingly mundane details of preprocessing can have substantial impact on your analysis.  Imagine what would happen to a sentiment analysis program that removed negation (e.g. *not* and *n't*) - how would it differentiate between ***not*** *happy* and *happy*?!
+
+Now this lab is getting on the long side and we're feeling too lazy to reproduce all of that counting code.  So, rather than iterating over the dataframe one row at a time, we'll just grab all the Tweet text from the dataframe as one big string for re-counting the tokens.  Since we're not finding sentences or looking for distributions across Tweet boundaries, this should be about the same as if we re-ran our `df.itertuples` code from above.
+
+```{python}
+#| cellUniqueIdByVincent: 90def
+#| cell_id: 00065-d2263826-ac25-4e29-baa9-f5ed978128c6
+#| tags: []
+total_tokens = 0
+token_counts = {}
+
+#get all of the values from the tweet_text column as an array, then use Python's join() function to
+#put all of the tweets together into one big string
+all_tweet_text_as_one_big_string = ' '.join(df['tweet_text'].tolist())
+
+# now perform the tokenization and counting
+df1_all_tokens = get_token_analysis(all_tweet_text_as_one_big_string)
+
+# sort the counts by order if descending frequency
+sorted_token_types = sorted(token_counts.items(), key=lambda x:x[1], reverse=True)
+print(sorted_token_types)
+```
+
+Now we can try that visualization again and see if it gives us a better feel for the data.
+
+```{python}
+#| cellUniqueIdByVincent: eb6a0
+#| cell_id: 00068-df41d9d4-f7d1-4418-a3ce-4763830d134c
+#| tags: []
+# It probably won't be practical to visualize all the words in our corpus, so let's start by showing the top 30.
+num_to_plot = 30
+
+# Here, we're taking our sorted_token_types, which is an array of tuples, and converting it into a dataframe
+df1 = pd.DataFrame(sorted_token_types[:num_to_plot], columns = ['token' , 'count'])
+
+# Now we just plot it, with tokens on the x axis and counts on the y axis
+df1.plot(x='token', y='count', kind='bar' )
+```
+
+You're probably thinking that there's something strange about the high frequency of items such as *https* and *amp*.  We've already discussed how important it is to know the behavior of your tokenizer.  In this case, *https* occurs a lot because the tokenizer we're using splits it off from its URL.  But what about *amp*?  That looks suspiciously like ill-handled html codes.  Let's explore that hypothesis with a quick ***concordance***(key word in context or *kwic*) view. 
+
+```{python}
+#| cellUniqueIdByVincent: a3c69
+#| cell_id: 00073-c6c8e859-752d-423d-96e6-ccf0560205c4
+#| tags: []
+from nltk import text
+
+kwic = nltk.text.ConcordanceIndex(df1_all_tokens)
+kwic.print_concordance("amp")
+```
+
+As we suspected, that amp is really an [html ampersand character](https://dev.w3.org/html5/html-author/charref) - our preprocessing should have converted the html code `&amp;` to the character `&` before running tokenization.  Either that or our tokenizer should have kept html codes as a single token producing `['&amp;']` instead of `['&','amp',';']`.  Imagine if that *amp* made it into our topic model, we might mistakenly end up thinking that electricity (amp -->ampere) or music (amp --> amplifier) are somehow involved in the conversation on covid! 
+
+### Hashtag Frequency Distributions
+
+Another interesting distribution for us to look at are the hashtag counts, since hashtags can be seen as representing either the topic of a document or an opinion being expressed by its users (or both).  You can think of hashtags as keywords or key-phrases that have been identified for free by the author.  From text above, you can see that the hashtags are also part of the Tweet text, but pulling them out separately may give us a more focused look at the themes or opinions of the messages.
+
+```{python}
+#| cellUniqueIdByVincent: e249c
+#| cell_id: 00053-93548b60-6e53-438b-81b6-2b0fda0ee55c
+#| tags: []
+num_to_plot = 50
+# title_text = 'Top %i words in Tweets before removing stop words' % num_to_plot
+
+# Here, we're taking our sorted_token_types, which is an array of tuples, and converting it into a dataframe
+df1 = pd.DataFrame(sorted_hashtag_types[:num_to_plot], columns = ['hashtag' , 'count'])
+
+# Now we just plot it, with tokens on the x axis and counts on the y axis
+df1.plot(x='hashtag', y='count', kind='bar' )
+```
+
+Wow!  This plot is way more powerful than the first keyword plot! Although it's the same visually, the content is so much better that it gives us a much better idea of the kinds of ideas that are being expressed in the dataset contained in 'covidhoax_hashtag.csv'.  It also gives us some insight into some of the questions about balance and representativeness in our corpus.  This particular dataset was formed by finding tweets with the hashtag #CovidHoax, and the data that it pulled back represents a population of speakers who don't believe in the seriousness of the COVID-19 pandemic.
+
+***Spoiler Alert: *** Notice that there are many different variants of 'covidhoax' in this dataset.  Twitter's search API uses a technique called *normalization*, which enables it to ignore superficial differences in spelling, capitalization, grammatical number and even punctuation; for example, *BlackBoard*, *black-board*, and *blackboards* might all be converted to the same form in order to increase your ability to find relevant data.  In Lab 3 we will spend a lot of time examining the question of text normalization.
+
+***Exercise:  *** Try reproducing the counts and graphs from this lab based on building a dataset with a hashtag from the opposite viewpoint, such as #covidisreal or #wearamask.  Would combining the hastags give you a more balanced dataset, e.g. for positive and negative sentiment analysis? 
+
+### Dispersion
+A dispersion plots is a tool that can help you discern patterns in your data.  Dispersion plots offer not only a quick glance at the relative proportions of the target words in the text, but also an idea of *where* they occur.  You can quickly see whether a word is all bunched together in one portion of the document, or spread throughout.  We're going to try this with our Twitter data set, but since it is an online conversation rather than something like a book, perhaps it makes sense to make sure the Tweets are ordered by theier post date, so we can get a sense of the dispersion over the conversation as it evolved through time.
+
+```{python}
+#| cellUniqueIdByVincent: 048ec
+#| cell_id: 00074-15f0fbf9-232b-4367-9974-f687c95a86c7
+#| tags: []
+ # make sure our created date column is acutally a date-time object
+ # rather than a string or a generic object, then sort the dataframe by the dates
+ df['created_date'] = pd.to_datetime(df.created_date)
+ df.sort_values(by='created_date')
+
+ # get all the tweets as one big string, then get the token counts
+ all_tweet_text_as_one_big_string = ' '.join(df['tweet_text'].tolist())
+ all_tweet_tokens = get_token_analysis(all_tweet_text_as_one_big_string)
+ 
+# import the NLTK package in which the dispersion_plot capability is defined
+# https://www.nltk.org/_modules/nltk/draw/dispersion.html
+ from nltk.draw.dispersion import dispersion_plot
+ 
+# list some of the words we want to examine
+pandemic_words =   ["pandemic", "CDC", "cure", "science", "vaccine", "virus", "guidelines", "mask", "masks", "FDA"]
+conspiracy_words = ["plandemic", "scamdemic", "hoax"]
+search_words = pandemic_words
+moral_words = ["like", "love", "adore", "dislike", "hate", "abhor", "detest", "sickening"]
+some_stopwords = ["for","a", "the", "and"]
+
+# plot the words of interest
+dispersion_plot(all_tweet_tokens,search_words, ignore_case=True, title="Dispersion of pandemic words")
+dispersion_plot(all_tweet_tokens, moral_words, ignore_case=True, title="Dispersion of emotion words")
+dispersion_plot(all_tweet_tokens, some_stopwords, ignore_case=True, title="Dispersion of stopwords")
+```
+
+This dispesion displays the words in the order you present them.  If you want to have it sort in descending order, you can define a method to do that for you.  The following method looks up each of our search words in our `token_counts` hash to get its `count` and then reverse sorts the resulting dictionary.  Once we have the counts of the search terms in a sorted dictionary, we can just return the *dictionary*'s (*hashmap*'s) keys, since they are the words we're searching on. We can then pass those nicely ordered keys into the dispersion plot.
+
+```{python}
+#| cellUniqueIdByVincent: db2a0
+#| cell_id: 00082-552690dd-8e06-47fa-abbe-e5a30ed9bf38
+#| tags: []
+def sort_by_frequency(terms):
+    search_term_counts = {}
+    for cur_term in terms:
+        if cur_term in token_counts:
+            search_term_counts[cur_term] = token_counts[cur_term]
+        else:
+            search_term_counts[cur_term] = 0
+    sorted_search_terms = list(dict(sorted(search_term_counts.items(), key=lambda x:x[1], reverse=True)).keys())
+    #print(sorted_search_terms)  
+    return sorted_search_terms
+```
+
+```{python}
+#| cellUniqueIdByVincent: 7fb8a
+#| cell_id: 00083-f81ba560-20aa-4733-b5e4-351ef31831fe
+#| tags: []
+# sanity test the new function
+terms = ['loser','mask','covid']
+sort_by_frequency(terms)
+```
+
+```{python}
+#| cellUniqueIdByVincent: 6949e
+#| cell_id: 00083-1b3ae8e7-3d4c-4c16-8235-9209c2d92d7b
+#| tags: []
+# plot the words of interest
+dispersion_plot(all_tweet_tokens,sort_by_frequency(search_words), ignore_case=True, title="Dispersion of pandemic words")
+dispersion_plot(all_tweet_tokens, sort_by_frequency(moral_words), ignore_case=True, title="Dispersion of emotion words")
+dispersion_plot(all_tweet_tokens, sort_by_frequency(some_stopwords), ignore_case=True, title="Dispersion of stopwords")
+```
+
+***Exercise: *** Notice that the stopwords are still in the same order - they didn't sort!  Why is that?  Because we chose not to count *stopwords* when we generated our token counts, there fore our `sort_by_frequency` function treats them all as having a count of `0` so they just stay where they were when you created the search term list.  Alter the code in this notebook to include a separate dictionary containing counts of stopwords, then regenerate the dispersion plot for stopwords.  Also, in [Chapter 2 of Natural Language Processing with Pythib](http://www.nltk.org/book/ch02.html), the authors intorduce a function `content_fraction`.  Reproduce that function and report the percentage of your text that is content words and the percentage that is stopwords.
+
+#### Quick kwic!
+It's super fun to plug in different words and see how they disperse! Even more fun is thinking of all the ways we could make the graphs and the information they convey even more valuable.  For example, flattening the distinction between *mask* and *masks* so the singular and plural occur together on a single row would help our understanding of that term.  It's interesting that *hate* occurs so infrequently.  This might make us want to look at the contexts in which it does occur.  A quick *concordance* can help with that.
+
+```{python}
+#| cellUniqueIdByVincent: '92600'
+#| cell_id: 00078-c59561c8-b7fa-49c1-91d7-ca3346d43a4f
+#| tags: []
+from nltk import text
+
+kwic = nltk.text.ConcordanceIndex(all_tweet_tokens)
+kwic.print_concordance("hate")
+```
+
+On a positive note, our ***key word in context (kwic)*** view suggests that *hate* is being used primarily in idiomatic and metaphorical speech.  That's a relief.  Looking at 'like', the picture looks similar, it's usually used with its *'as if'*  or *'such as'* meanings.
+
+```{python}
+#| cellUniqueIdByVincent: 9b2c6
+#| cell_id: 00079-a6b10257-347d-4bda-ab39-11215a1ad931
+#| tags: []
+kwic.print_concordance("like")
+```
+
+
+
+*** Exercise: ***  Try plugging in different values to the visualizations we've just introduced.  Perhaps try analyzing different datasets to answer a question of interest to you.
+
+### Lexical Diversity
+Lexical diversity is a measure of how varied the words are in your text.  Lab 1 covers lexical diversity in some detail.  It is another measure that you can use during EDA to describe or compare corpora.  Here, we repeat the definiton of lexical diversity given in the reading from NLTK chapter 1 and use it to compare the lexical diversity of two corpora.  First, let's define a convenience functon for getting all of the tokens from a twitter data set just by passing a pandas dataframe.
+
+```{python}
+#| cellUniqueIdByVincent: 128ed
+#| cell_id: 00092-219e6cf3-7659-406c-9885-615bcc3ebbf2
+#| tags: []
+def get_tokens(file_name):
+    df = pd.read_csv(file_name)
+
+    #get all of the values from the tweet_text column as an array, then use Python's join() function to
+    #put all of the tweets together into one big string
+    tweet_text_as_one_big_string = ' '.join(df['tweet_text'].tolist())
+
+    # now perform the tokenization
+    return nltk.word_tokenize(tweet_text_as_one_big_string)
+```
+
+Now we re-use the lexical diversity method from Lab1, which gives the ratio of total tokens to unique tokens.
+
+```{python}
+#| cellUniqueIdByVincent: 8324e
+#| cell_id: 00092-ee7acd6b-f5f1-4639-9da1-a110071f6865
+#| tags: []
+def lexical_diversity(token_array):
+    return len(token_array) / len(set(token_array))
+```
+
+We can use this functon to compare the two corpora.  Remember, though, that at this point, we've made no attempt to normalize these tokens, so this score could be quite misleading.
+
+```{python}
+#| cellUniqueIdByVincent: 769dc
+#| cell_id: 00095-97a0679b-c8cb-4453-a576-cd6010afcec0
+#| tags: []
+ds1_tokens = get_tokens('./covidhoax_OR_notomasks_hashtag.csv')
+ds2_tokens = get_tokens('./covidisreal_OR_wearamask_hashtag.csv')
+
+print(lexical_diversity(ds1_tokens))
+print(lexical_diversity(ds2_tokens))
+```
+
+### Collocations
+Collocations are sequences of words that co-occur unusually frequently and that over time start to take on a meaning or a salience that resists the token sequence being broken down into its individual parts. Often words that start off as collocations become increasingly fixed as lexical items, especially when they are used with great frequency.  This process is called *lexicalization*. For example, as noun-noun collocations such as *'ice chest'*, *'data base'* or *'war game'* become increasingly cemented in the vocabulary of English, even native speakers pause to wonder 'Does *ice-chest* have a hyphen?  Is *database* all one word? That is a sign of the increasing *lexicalization* of the collocation.  In some cases, you can introspect about whether a collocation has a non-compositional meaning by trying to substitute it with a single synonym, such as *'cooler'* for *'icechest'* or *'assassin'* for *'hit man'* (or is that *hitman*?)  Collocations can consist of numerous combinations of parts-of-speech, but most have in common the somewhat idiosyncratic nature of their meaning, which can exhibit differing degrees of compositionality.  This is a challenge for second language learners, and websites such as [7esl](https://7esl.com/category/english-expressions/english-collocations/) devote some effort to helping people master them.  For the purposes of natural language processing, when setting out to answer an analytic question with natural language data, it is important to consider whether and to what degree identifying collocations is relevant and necessary.  How you treat collocations can affect everything from first order frequency counts to the quality of word embeddings, which are so widely used in contemporary machine learning.
+
+*** Fun Fact:  ***  Another term used to refer to a collocation is ***n-gram*** (also written ngram, since it is a now lexicalized collocation for some speech communities) .  We'll talk about this term many times throughout the course, because *n-grams* are so central to language modeling in NLP.  The ***n*** in ***n-gram*** is meant to represent a variable of any length.  The ***gram*** in ***n-gram*** is a graphical representation of some chunk of language, which might be characters, morphemes, tokens, or words.  Some of the shorter n-grams have special names, such as *bigram* or *trigram*, which are 2-grams and 3-grams, respectively.  
+
+Let's explore the bigram collocations in our two texts.  First, let's take a look at what I bigram sequence looks like with a contrived example.
+
+```{python}
+#| cellUniqueIdByVincent: a498a
+#| cell_id: 00100-20548df7-73c9-45dd-9e52-25cca74cb3ce
+#| tags: []
+minicorpus = "The can can is a dance that can land you in the can, if you can imagine that.  I can can tomatoes but I can never locate the can when I want it, which might make my boss can me. Can the slacker!  Can you or can you not can these peas?  I can not go, can you?"
+minicorpus_tokens = nltk.word_tokenize(minicorpus)
+print(minicorpus_tokens)
+list(nltk.bigrams(minicorpus_tokens))
+```
+
+To be sure that we understand what's going on here, let's write our own function to count the bigrams as we encounter them.
+
+```{python}
+#| cellUniqueIdByVincent: 018ad
+#| cell_id: 00102-dbc7832f-4138-4852-a0a0-850dfa482e92
+#| tags: []
+def count_bigrams(token_array):
+
+    bigram_counts = {}
+    for index in range(len(token_array)):
+        if index>0:
+            bigram = (token_array[index-1], token_array[index])
+            if bigram in bigram_counts:
+                bigram_counts[bigram] += 1
+            else:
+                bigram_counts[bigram] = 1
+    return bigram_counts
+
+```
+
+This function iterate sover the tokens in the text one by one.  It counts the bigram formed by the first and second token, then the bigram formed by the second and third token, then the third and fourth, and so on.  Each time, it checks to see if the bigram being considered is already in the dictionary (hashmap) of bigram counts.  If it is, the count is incremented.  If it's not, the count is set to 1.
+
+So now, we'll test use this to illustrate how you can use bigram counts to predict what word will follow a word of your choice.
+
+```{python}
+#| cellUniqueIdByVincent: e5a67
+#| cell_id: 00105-42e51f28-80cf-40ba-9eb7-4bcb0ea6f9ad
+#| tags: []
+#silly_sentence = "data science counts by mad data science practitionaers use data counts by data base query and data select statements and data science experts must explain the data counts visualization"
+silly_sentence = "data science counts by mad data science practitionaers use data counts by data base query and data select statements and data science experts must explain the data counts visualization"
+silly_tokens = nltk.word_tokenize(silly_sentence)
+silly_counts = count_bigrams(silly_tokens)
+sorted_silly_counts = sorted(silly_counts.items(), key=lambda x:x[1], reverse=True)
+print(sorted_silly_counts)
+```
+
+Now, this is a pretty interesting set of counts to have.  If we test this function on our silly sentence, we can see the following bigrams whose first token is 'data':
+
+- ('data', 'science') : 3
+- ('data', 'counts')  : 2
+- ('data', 'select')  : 1
+- ('data', 'base')    : 1
+
+Given the token '*data*', what is the most likely word to follow? Yes: *science*!
+
+#### Fun with collocations:  generating random text with bigrams
+
+So now, let's pick up on the section 'Generating Random Text with Bigrams' from [chapter 2](http://www.nltk.org/book/ch02.html) of the NLTK book.  If we generate a bigrams and a conditional frequency distribution for our silly sentence, we should come up with similar results as we just did with our home-grown counts.
+
+```{python}
+#| cellUniqueIdByVincent: c03e5
+#| cell_id: 00107-bd1b81c8-cdc2-4790-a57b-e0f29a1841f1
+#| tags: []
+nltk_bigrams = nltk.bigrams(silly_tokens)
+silly_cfd = nltk.ConditionalFreqDist(nltk_bigrams)
+print(dict(silly_cfd['data']))
+```
+
+Cool, so now you know how to build a calculator and use one, too.  So let's finish exploring the NLTK example for generating random text, because that can be pretty fun to play with.  Using the conditional frequency distribution, their toy `generate_model` function produces a specified number of words(15 by default) starting from a 'seed word'.  The seed word needs to be present in the text.  We reproduce that function here:
+
+```{python}
+#| cellUniqueIdByVincent: 2d749
+#| cell_id: 00109-77dec3a9-a56a-4a60-8ed1-4e71e203f53f
+#| tags: []
+def generate_model(cfdist, word, num=15):
+    for i in range(num):
+        print(word, end=' ')
+        word = cfdist[word].max()
+```
+
+So let's try this with our `silly_cfd` and a word from `silly_sentence`.
+
+```{python}
+#| cellUniqueIdByVincent: 274f7
+#| cell_id: 00111-9fbeda63-933f-4463-94b6-7cf40b692f46
+#| tags: []
+seed_word = 'science'
+num_to_generate = 8
+generate_model(silly_cfd, seed_word, num_to_generate)
+```
+
+Congratulations, you've just performed text generation using only bigram counts!  Notice that this `generate_model`function is ***deterministic***: meaning that given a specific input, it always produces the same result for that input.  
+
+Now let's try this again with our covid data sets and see if we can generate any interesting political speeches.  We start by getting NLTK bigrams and frequency distributions for them.
+
+```{python}
+#| cellUniqueIdByVincent: a183a
+#| cell_id: 00114-d29bee59-0410-4780-9a8c-cffb4830d899
+#| tags: []
+ds1_tokens = get_tokens('./covidhoax_OR_notomasks_hashtag.csv')
+ds1_bigrams = nltk.bigrams(ds1_tokens)
+antimask_cfd = nltk.ConditionalFreqDist(ds1_bigrams)
+
+
+ds2_tokens = get_tokens('./covidisreal_OR_wearamask_hashtag.csv')
+ds2_bigrams = nltk.bigrams(ds2_tokens)
+promask_cfd = nltk.ConditionalFreqDist(ds2_bigrams)
+```
+
+We're just going to change the generate_model function a bit so it runs when it encounters words it's never seen before and so it gets in less of an endless # hashtag battle.  We'll call the new function `new_generate_model` (Very creative, aren't we?)
+
+```{python}
+#| cellUniqueIdByVincent: a7e56
+#| cell_id: 00112-b3eec20c-9962-47da-b0d2-ebba2221882e
+#| tags: []
+from random import randint
+
+def get_random_word(cf_dist):
+    any_number = randint(0, len(cf_dist))
+    choices = list(cf_dist.keys())
+    word = choices[any_number]
+    return word
+
+
+def get_random_conditional_word(cfdist, word):
+    if (not word in cfdist):
+            word = get_random_word(cfdist)
+    else:
+        if len(cfdist[word]) > 1:
+            any_number = randint(0, len(cfdist[word]))
+            pick_from_me = list(cfdist[word].keys())
+            word = pick_from_me[any_number]
+        else:
+            word = get_random_word(cfdist)
+    return word
+
+
+def new_generate_model(cfdist, word, num=15):
+    for i in range(num):
+        if word in ["#", "https"]:
+            word = get_random_conditional_word(cfdist, word)
+        elif (not word in cfdist):
+            word = get_random_word(cfdist)
+        print(word, end=' ')
+        word = cfdist[word].max()
+```
+
+```{python}
+#| cellUniqueIdByVincent: f7ccc
+#| cell_id: 00116-c4e67a8a-a4fd-4968-9857-06f2a8ad434a
+#| tags: []
+seed_word = 'hope'
+target_num = 15
+```
+
+```{python}
+#| cellUniqueIdByVincent: 42d49
+#| cell_id: 00114-cdc6ccfc-85c2-4b56-8b2a-9ffa9a6f6564
+#| tags: []
+# pro-mask data set
+generate_model(promask_cfd, seed_word, target_num)
+print("\n")
+new_generate_model(promask_cfd, seed_word, target_num)
+```
+
+```{python}
+#| cellUniqueIdByVincent: '72713'
+#| cell_id: 00115-73aa218f-e1e1-4629-af25-40c4148939ab
+#| tags: []
+#anti-mask data-set
+
+generate_model(antimask_cfd, seed_word, target_num)
+print("\n")
+new_generate_model(antimask_cfd, seed_word, target_num)
+```
+
+***Discussion: ***  Is the function `new_generate_model` *deterministic* or *non-deterministic*?  Why? 
+
+### Measures of association
+
+In the previous section, we saw how powerful simple frequency counts of bigrams could be.  With just some simple counts we can generate text as convincing as many other Twitter bots! In this section, however, we want to stress that the simple frequency counts are really only the beginning of what you can do.  In this lab and Lab 1, we've mentioned that collocations are a special type of bigram that has special characteristics, e.g.:
+
+- represents a single concept
+- resists its parts being substituted
+- is becoming lexicalized, i.e. part of a speech community's standard vocabulary
+- may be subject to regular morphological rules (e.g. take suffixes appropriate for the part of speech)
+
+and probably others.  Not every bigram is a collocation in this sense, however, so how can we separate the true collocations from words that just happen to appear next to one another with some frequency?  This is still an active and valid question in computational linguistics.  One way that has been used traditionally is to calcluate the ***pointwise mutual information (PMI)***.  [PMI](https://en.wikipedia.org/wiki/Pointwise_mutual_information) is a measure of association that takes into account not only the side-by-side frequency of each pair of bigrams, but also factors in the probability of seeing each of the terms independently.
+
+Let's see how that works.
+
+
+
+```{python}
+#| cellUniqueIdByVincent: '80e13'
+#| cell_id: 00121-e954a49c-acd4-4ded-9da4-81d44233c6b8
+#| tags: []
+from math import log2
+
+def probability(count_of_item, total_items):
+    return count_of_item / total_items
+
+
+def pmi(prob_tok1, prob_tok2, prob_tok1_tok2):
+    return log2(prob_tok1_tok2 / (prob_tok1 * prob_tok2))
+```
+
+We'll also introduce a new `get_counts`function that produces item counts and bigram counts simutaneously.
+
+```{python}
+#| cellUniqueIdByVincent: 4c337
+#| cell_id: 00123-e2f8d538-ee8f-4990-9f2f-35e2896c9b32
+#| tags: []
+def get_counts(token_array):
+    unigram_counts = {}
+    bigram_counts = {}
+    for index in range(len(token_array)):
+        unigram = token_array[index]
+        if unigram in unigram_counts:
+            unigram_counts[unigram] += 1
+        else:
+            unigram_counts[unigram] = 1
+        if index>0:
+            bigram = (token_array[index-1], token_array[index])
+            if bigram in bigram_counts:
+                bigram_counts[bigram] += 1
+            else:
+                bigram_counts[bigram] = 1
+    return unigram_counts, bigram_counts
+```
+
+```{python}
+#| cellUniqueIdByVincent: '27462'
+#| cell_id: 00124-9acccd27-1574-488f-aff2-2ba99636321a
+#| tags: []
+# test get_counts
+test_sentence = "and a one and a two and a one, two, three: tutti frutti, aw rooty, tutti frutti, woo tutti frutti, aw rooty tutti frutti, aw rooty tutti frutti, aw rooty a wop bop-b-luma b-lop bam bomtooty fruity oh rudy tooty fruity oh rudy"
+test_tokens = nltk.word_tokenize(test_sentence)
+test_unigrams, test_bigrams = get_counts(test_tokens)
+total_unigrams = len(test_tokens)
+print("total tokens (unigrams): ",total_unigrams)
+total_bigrams = len(test_tokens) -1
+print("total bigrams: ",total_bigrams)
+print("\n")
+print(test_unigrams)
+print("\n")
+print(test_bigrams)
+```
+
+Since we have them, we may as well use these test counts to calculate the PMI for each pair of bigrams.  We can then explore the differences in rankings given raw counts versus PMI scores.
+
+```{python}
+#| cellUniqueIdByVincent: 34f23
+#| cell_id: 00126-1181afc0-2795-4b4e-aed7-169ef6c07cdd
+#| tags: []
+def get_bigram_stats(total_unigrams, unigrams, bigrams):
+    all_bigram_stats = {}
+    for bigram_tuple in bigrams:
+        cur_bigram_stats = {}
+        token_1 = bigram_tuple[0]
+        token_2 = bigram_tuple[1]
+        # simple bigram count
+        bigram_count = bigrams[bigram_tuple]
+        cur_bigram_stats['count'] = bigram_count
+        # fraction of total bigrams represented by this bigram
+        total_bigrams = total_unigrams - 1
+        bigram_percentage = bigram_count / total_bigrams
+        cur_bigram_stats['percent'] = bigram_percentage
+        #pmi
+        prob_token_1 = probability(unigrams[token_1], total_unigrams)
+        prob_token_2 = probability(unigrams[token_2], total_unigrams)
+        prob_bigram = probability(bigram_count, total_bigrams)
+        cur_bigram_stats['pmi'] = pmi(prob_token_1, prob_token_2, prob_bigram)
+        all_bigram_stats[bigram_tuple] = cur_bigram_stats
+    return all_bigram_stats
+
+
+```
+
+```{python}
+#| cellUniqueIdByVincent: '10328'
+#| cell_id: 00128-6ae53d92-c270-48c0-bbf2-e211b9100a1a
+#| tags: []
+test_sentence = "data science is fun. data science is nice.  data science is the best. all science is pretty fun, but data science is best. I love data science because data and science are both cool."
+test_tokens = nltk.word_tokenize(test_sentence)
+test_unigrams, test_bigrams = get_counts(test_tokens)
+test_bigram_stats = get_bigram_stats(len(test_tokens), test_unigrams, test_bigrams)
+for item in test_bigram_stats.items():
+    print(item, "\n") 
+```
+
+```{python}
+#| cellUniqueIdByVincent: d75a0
+#| cell_id: 00128-130992db-951f-41cd-91ad-5c312277051c
+#| tags: []
+def rank_collocations(bigram_stats, rank_by_stat='pmi'):
+    return dict(sorted(bigram_stats.items(), key=lambda x:x[1][rank_by_stat], reverse=True))
+ 
+
+
+#test_dict = {('shouldbe', 'second'): {'pmi':3, "percent":.30, 'count':5000}, ('shouldbe', 'third'): {'pmi':1, 'percent':.5, 'count':50}, ('shouldbe', 'first'): {'pmi':5, 'percent':.1, 'count': 1}}
+#print(rank_collocations(test_dict))
+#print(rank_collocations(test_dict,"percent"))
+#print(rank_collocations(test_dict,"count"))
+print(rank_collocations(test_bigram_stats, "pmi").())
+
+
+```
+
+You can see that these pmi numbers are not really convincing.  PMI is a statistical technique, and requires more "training data" to produce reasonable numbers.  
+
+[Medium blog python-in-plain-english on the Limitations of PMI](https://medium.com/python-in-plain-english/collocation-discovery-with-pmi-3bde8f351833):
+"Despite doing our job, PMI has its weakness. It’s prone to frequency bias and will weight lower or 0 frequency terms more over higher frequency terms. This may result in wrong collocation relation. One way to fix this is to apply Laplace Smoothing or use another technique called Chi Square"
+
+Given this limitation, our pmi calculations on the `test_sentence` about data science is not very useful.  Let's try our `pmi`function on the same text as in the plain-english Medium blog and see if we get comparable numbers.
+
+Start by loading the text file as one big string.
+
+```{python}
+#| cellUniqueIdByVincent: 8d908
+#| cell_id: 00131-aa743cec-f6c6-493f-957f-aeac570e18a0
+#| tags: []
+def load_textfile(file_name):
+    with open(file_name) as text_file:
+        text = text_file.read()
+    return text.replace('\n', ' ')
+
+
+# this is the text file from python-in-plain-english (https://medium.com/python-in-plain-english/collocation-discovery-with-pmi-3bde8f351833)
+textfile_name = 'flowers.txt'
+textfile_text = load_textfile(textfile_name)
+```
+
+Tokenize using the same nltk tokenizer we've been using throughout this lab.
+
+```{python}
+#| cellUniqueIdByVincent: e3437
+#| cell_id: 00133-8ea9ae8e-7797-4ff1-b082-5e26d9141cf3
+#| tags: []
+# count the tokens of the text file
+textfile_tokens = nltk.word_tokenize(textfile_text)
+num_tokens = len(textfile_tokens)
+print(f"Number of tokens in the corpus: {num_tokens}\n")
+
+# spacy gives 34,235 (python in plain english implementation)
+# nltk gives 32,699 (our implementation)
+```
+
+Now generate the unigram and bigram counts as previously.
+
+```{python}
+#| cellUniqueIdByVincent: 9d203
+#| cell_id: 00134-5b6cab38-cb10-416c-bf3b-d15474a41196
+#| tags: []
+textfile_unigrams, textfile_bigrams = get_counts(textfile_tokens)
+textfile_bigram_stats = get_bigram_stats(num_tokens, textfile_unigrams, textfile_bigrams)
+textfile_rankings = rank_collocations(textfile_bigram_stats, "pmi")
+```
+
+Finally, let's observe some of our results.
+
+```{python}
+#| cellUniqueIdByVincent: a9272
+#| cell_id: 00135-1391881b-390f-460e-8019-757eddd1f654
+#| tags: []
+print("Textfile rankings by PMI (descending order):\n")
+i=0
+for item in textfile_rankings.items():
+    print(item)
+    if i==12:
+        break
+    i += 1
+
+
+
+print("\n\nSearch collocation:\n")
+
+search_collocation = ("sunflower", "seed")
+print(search_collocation, ":  ", textfile_bigram_stats[search_collocation])
+
+# https://medium.com/python-in-plain-english/collocation-discovery-with-pmi-3bde8f351833 pmi for sunflower seed on this text file is: 
+# pmi for sunflower seed = 7.853815306997303
+#
+# ours is:
+# pmi for sunflower seed =  7.888478559843929
+#
+# close enough, given the differences in numbers of token and possibly in preprocessing
+```
+
+Some of these collocations do look quite convincing, but the fact that they are all only count 6 is concerning.  We'll return to that question in subsequent labs.  For now, know that *PMI* is one ***measure of association*** that can enhance your exploratory data analysis and improve your handling of ***multi-token words*** (often called *multiwords*), which are collocations with a high degree of association that have conceptual salience for some speech community.
+
+*** Exercise: ***  Given all that you have learned in this lab about counting and measuring aspects of a data set, try to think of additional visualizations for some of the statistics that we didn't measure.  If you can, try to think of more ways of describing and analyzing a data set.
+

@@ -1,14 +1,27 @@
+# Core
 nbdev
-spacy>=3.7,<3.8
-lisette>=0.0.15
 fastcore>=1.8.16
-pandas>=2.3.3
-nltk>=3.9.2
+
+# NLP
+spacy>=3.7,<3.8
+nltk>=3.9,<3.10
+transformers>=4.45,<4.47
+torch==2.1.2
+
+# Data
+pandas>=2.0,<2.2
 orjson>=3.11.5
+
+# App / infra
+fastapi==0.127.0
+pydantic<3
 python-dotenv>=1.2.1
 IPython>=9.7.0
-pydantic<3
-fastapi==0.127.0
-torch>=2.3,<2.5
-transformers>=4.45,<4.47
+
+# Teaching / LLM tooling
+lisette>=0.0.15
+dialoghelper >= 0.1.6
+
+
+# spaCy model (wheel install)
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl

@@ -1,5 +1,6 @@
 # Core
 nbdev
+nbformat
 fastcore>=1.8.16
 
 # NLP

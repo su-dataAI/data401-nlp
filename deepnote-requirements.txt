@@ -1,0 +1,23 @@
+# Core
+fastcore>=1.8.16
+
+# NLP
+transformers>=4.45,<4.47
+
+# Data
+orjson>=3.11.5
+
+# App / infra
+fastapi==0.127.0
+python-dotenv>=1.2.1
+
+# Teaching / LLM tooling
+litellm==1.80.10
+grpcio<1.68
+wrapt<1.15
+lisette>=0.0.15
+dialoghelper >= 0.1.6
+
+
+# spaCy model (wheel install)
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl

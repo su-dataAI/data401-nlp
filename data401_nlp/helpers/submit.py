@@ -6,7 +6,6 @@
 __all__ = ['collect_answers', 'parse_answers', 'submit_answers']
 
 # %% ../../nbs/helpers/02_submit.ipynb 4
-from dialoghelper import find_msgs
 import os
 import httpx
 import nbformat

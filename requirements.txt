@@ -16,6 +16,10 @@ httpx>=0.27.0
 lisette>=0.0.15
 dialoghelper>=0.1.6
 
+# Scientific computing
+numpy>=1.24,<2.0
+matplotlib>=3.7,<4.0
+
 # NLP packages (extras[nlp])
 spacy>=3.7,<3.9
 nltk>=3.9,<3.10

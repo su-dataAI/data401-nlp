@@ -19,6 +19,8 @@ d = { 'settings': { 'branch': 'main',
                                                                                             'data401_nlp/helpers/submit.py'),
                                             'data401_nlp.helpers.submit.parse_answers': ( 'helpers/submit.html#parse_answers',
                                                                                           'data401_nlp/helpers/submit.py'),
+                                            'data401_nlp.helpers.submit.review_answers': ( 'helpers/submit.html#review_answers',
+                                                                                           'data401_nlp/helpers/submit.py'),
                                             'data401_nlp.helpers.submit.submit_answers': ( 'helpers/submit.html#submit_answers',
                                                                                            'data401_nlp/helpers/submit.py')},
             'data401_nlp.tests.platform': {}}}

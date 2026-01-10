@@ -1,23 +1,26 @@
-# Core
+# Deepnote-specific requirements
+# Lighter weight installation for Deepnote environment
+# Install in Deepnote with: pip install -q -r deepnote-requirements.txt
+
+# Core package (will pull in base requirements from settings.ini)
 fastcore>=1.8.16
-
-# NLP
-transformers>=4.45,<4.47
-
-# Data
+nbformat>=5.0
+pandas>=2.0,<2.3
 orjson>=3.11.5
-
-# App / infra
-fastapi==0.127.0
 python-dotenv>=1.2.1
+IPython>=9.7.0
+httpx>=0.27.0
+lisette>=0.0.15
+dialoghelper>=0.1.6
 
-# Teaching / LLM tooling
-litellm==1.80.10
+# Minimal NLP (add more as needed per lab)
+transformers>=4.45,<4.50
+
+# Deepnote-specific: LLM tooling with version constraints
+litellm>=1.80,<1.85
 grpcio<1.68
 wrapt<1.15
-lisette>=0.0.15
-dialoghelper >= 0.1.6
 
-
-# spaCy model (wheel install)
-en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+# API support
+fastapi>=0.100,<0.128
+pydantic>=2.0,<3

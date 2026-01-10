@@ -21,8 +21,8 @@ spacy>=3.7,<3.9
 nltk>=3.9,<3.10
 
 # Transformers packages (extras[transformers])
-transformers>=4.45,<4.50
-torch>=2.1,<2.5
+transformers>=4.45,<4.58
+torch>=2.1,<2.10
 
 # API packages (extras[api])
 fastapi>=0.100,<0.128

@@ -14,7 +14,7 @@ lisette>=0.0.15
 dialoghelper>=0.1.6
 
 # Minimal NLP (add more as needed per lab)
-transformers>=4.45,<4.50
+transformers>=4.45,<4.58
 
 # Deepnote-specific: LLM tooling with version constraints
 litellm>=1.80,<1.85

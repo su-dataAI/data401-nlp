@@ -5,7 +5,7 @@
 # Core package (will pull in base requirements from settings.ini)
 fastcore>=1.8.16
 nbformat>=5.0
-pandas>=2.0,<2.3
+pandas>=2.0,<2.4
 orjson>=3.11.5
 python-dotenv>=1.2.1
 IPython>=9.7.0

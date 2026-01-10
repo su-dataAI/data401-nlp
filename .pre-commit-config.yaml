@@ -31,3 +31,7 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: nbstripout
+        name: Strip Jupyter notebook metadata and outputs
+        args:
+       

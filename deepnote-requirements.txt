@@ -1,6 +1,7 @@
 # Deepnote-specific requirements
 # Lighter weight installation for Deepnote environment
-# Install in Deepnote with: pip install -q -r deepnote-requirements.txt
+# Install in Deepnote Init file with: pip install -q -r deepnote-requirements.txt
+data401_nlp
 
 # Core package (will pull in base requirements from settings.ini)
 fastcore>=1.8.16
@@ -8,13 +9,15 @@ nbformat>=5.0
 pandas>=2.0,<2.3
 orjson>=3.11.5
 python-dotenv>=1.2.1
-IPython>=9.7.0
+#IPython>=9.7.0
 httpx>=0.27.0
 lisette>=0.0.15
 dialoghelper>=0.1.6
 
 # Minimal NLP (add more as needed per lab)
+torch>=2.1,<2.5
 transformers>=4.45,<4.50
+
 
 # Deepnote-specific: LLM tooling with version constraints
 litellm>=1.80,<1.85

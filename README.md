@@ -16,6 +16,79 @@ free to download and run elsewhere.
 I will add further instructions for running locally or on some other
 environment if course-specific modules are needed.
 
+## Installation
+
+### For Students (Google Colab / Deepnote)
+
+The easiest way to use this package is in Google Colab or Deepnote. In
+the first cell of your notebook, run:
+
+``` python
+# Install the package with all NLP dependencies
+!pip install -q data401-nlp[all]
+
+# The spaCy model will be automatically downloaded when needed
+from data401_nlp.helpers.spacy import ensure_spacy_model
+nlp = ensure_spacy_model("en_core_web_sm")
+```
+
+### For Local Development
+
+If you want to run the notebooks locally:
+
+``` bash
+# Clone the repository
+git clone https://github.com/su-dataAI/data401-nlp.git
+cd data401-nlp
+
+# Install with all dependencies
+pip install -e ".[dev,all]"
+
+# Download spaCy model
+python -m spacy download en_core_web_sm
+
+# Start Jupyter Lab
+jupyter lab
+```
+
+### Installation Options
+
+The package supports flexible installation based on your needs:
+
+``` bash
+# Minimal installation (core utilities only)
+pip install data401-nlp
+
+# With NLP tools (spaCy, NLTK)
+pip install data401-nlp[nlp]
+
+# With transformers and PyTorch
+pip install data401-nlp[transformers]
+
+# With API support (FastAPI, Pydantic)
+pip install data401-nlp[api]
+
+# Everything (recommended for students)
+pip install data401-nlp[all]
+```
+
+### Platform Support
+
+✅ Google Colab  
+✅ Deepnote  
+✅ Jupyter Lab  
+✅ Local Python 3.11+
+
+### Helper Modules
+
+The package includes several helper modules to make your NLP work
+easier:
+
+- `data401_nlp.helpers.env` - Environment detection and API key loading
+- `data401_nlp.helpers.spacy` - Automatic spaCy model management
+- `data401_nlp.helpers.submit` - Assignment submission utilities
+- `data401_nlp.helpers.llm` - LLM integration helpers
+
 ## Contents
 
 | Lab | Colab | GitHub |

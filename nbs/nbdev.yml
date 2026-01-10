@@ -4,6 +4,6 @@ project:
 website:
   title: "data401-nlp"
   site-url: "https://su-dataAI.github.io/data401-nlp"
-  description: "Labs for Data 401 Intro to NLP"
+  description: "Interactive NLP course labs for Jupyter, Colab, and Deepnote"
   repo-branch: main
   repo-url: "https://github.com/su-dataAI/data401-nlp"

@@ -25,10 +25,20 @@ statuses = [ '1 - Planning', '2 - Pre-Alpha', '3 - Alpha',
 py_versions = '3.6 3.7 3.8 3.9 3.10 3.11 3.12'.split()
 
 requirements = shlex.split(cfg.get('requirements', ''))
-if cfg.get('pip_requirements'): requirements += shlex.split(cfg.get('pip_requirements', ''))
 min_python = cfg['min_python']
 lic = licenses.get(cfg['license'].lower(), (cfg['license'], None))
 dev_requirements = (cfg.get('dev_requirements') or '').split()
+
+# Parse extras_require from pip_requirements
+extras_require = {'dev': dev_requirements}
+if cfg.get('pip_requirements'):
+    pip_reqs_raw = cfg.get('pip_requirements', '')
+    # Parse format: "extra_name: pkg1>=1.0 pkg2>=2.0"
+    for line in pip_reqs_raw.strip().split('\n'):
+        line = line.strip()
+        if ':' in line:
+            extra_name, deps = line.split(':', 1)
+            extras_require[extra_name.strip()] = deps.strip().split()
 
 package_data = dict()
 pkg_data = cfg.get('package_data', None)
@@ -49,7 +59,7 @@ setuptools.setup(
     packages = setuptools.find_packages(),
     include_package_data = True,
     install_requires = requirements,
-    extras_require={ 'dev': dev_requirements },
+    extras_require=extras_require,
     dependency_links = cfg.get('dep_links','').split(),
     python_requires  = '>=' + cfg['min_python'],
     long_description = open('README.md', encoding='utf-8').read(),

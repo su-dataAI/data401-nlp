@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Group development dependencies
+      dev-dependencies:
+        patterns:
+          - "pytest*"
+          - "nbdev*"
+          - "pre-commit*"
+      # Group NLP core packages
+      nlp-core:
+        patterns:
+          - "spacy*"
+          - "nltk*"
+      # Group transformers packages
+      transformers:
+        patterns:
+          - "transformers*"
+          - "torch*"
+      # Group API packages
+      api:
+        patterns:
+          - "fastapi*"
+          - "pydantic*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"

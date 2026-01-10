@@ -1,3 +1,46 @@
 [build-system]
-requires = ["setuptools>=64.0"]
+requires = ["setuptools>=64.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name="data401-nlp"
+dynamic = ["version", "dependencies"]
+readme = "README.md"
+requires-python=">=3.11"
+description = "Interactive NLP course labs for Jupyter, Colab, and Deepnote"
+authors = [
+    {name = "Lisa D Harper", email = "lisa.harper@su.edu"}
+]
+license = {text = "Apache-2.0"}
+keywords = ["nbdev", "jupyter", "nlp", "education", "spacy", "transformers"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Education",
+]
+
+[project.urls]
+Homepage = "https://github.com/su-dataAI/data401-nlp"
+Documentation = "https://su-dataAI.github.io/data401-nlp"
+Repository = "https://github.com/su-dataAI/data401-nlp"
+"Bug Tracker" = "https://github.com/su-dataAI/data401-nlp/issues"
+"Course Website" = "https://www.notion.so/Intro-to-Natural-Language-Processing-28b213a83886806982a5c03b425595c4"
+
+[tool.pytest.ini_options]
+testpaths = ["nbs"]
+python_files = "*test*.ipynb"
+addopts = "-v"
+
+[tool.coverage.run]
+omit = ["*/test*", "*/__init__.py", "setup.py"]
+
+[tool.nbdev]
+# Additional nbdev configuration
+lib_path = "data401_nlp"
+nbs_path = "nbs"

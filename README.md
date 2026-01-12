@@ -17,8 +17,12 @@ free to download and run elsewhere.
 
 #### Google Colab - single notebook experience
 
-If you prefer: - working within a single notebook - are already
-comfortable with Google Colab - want instant access to GPUs
+If you prefer:
+
+- working within a single notebook
+- are already comfortable with Google Colab
+- don’t mind re-installing dependencies on re-start
+- want instant access to GPUs
 
 you may prefer Google Colab. Some libraries will need to be re-installed
 after each re-start.
@@ -26,17 +30,22 @@ after each re-start.
 #### Deepnote
 
 If you are comfortable with working from within a forked copy of the
-repository itself and: - want automatic install of dependencies - low
-friction to move between notebooks - realtime collaboration
+repository itself and:
+
+- want easy install, more persistence of dependencies
+- low friction to move between notebooks
+- realtime collaboration
 
 you may prefer Deepnote. You will need to create a free account and then
 request an education plan.
 
 #### Local JupyterLab / Notebook
 
-If you are already comfortable in Jupyter in your local environment
-and: - you want full control of your machine and environment -
-persistence - and don’t mind dealing with managing your environment
+If you are already comfortable in Jupyter in your local environment and:
+
+- you want full control of your machine and environment
+- persistence of dependencies
+- and don’t mind dealing with managing your environment
 
 you may prefer local Jupyter.
 

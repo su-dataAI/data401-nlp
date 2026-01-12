@@ -3,7 +3,7 @@
 # Install in Colab with: !pip install -q -r colab-requirements.txt
 
 # Core package
-data401_nlp
+data401_nlp>=0.0.5
 
 # Core dependencies (Python 3.10 compatible versions)
 fastcore>=1.8.16

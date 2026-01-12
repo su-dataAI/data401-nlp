@@ -1,0 +1,37 @@
+# Google Colab-specific requirements
+# For Python 3.10 compatibility with Colab's pre-installed IPython 7.34.0
+# Install in Colab with: !pip install -q -r colab-requirements.txt
+
+# Core package
+data401_nlp
+
+# Core dependencies (Python 3.10 compatible versions)
+fastcore>=1.8.16
+nbformat>=5.0
+pandas>=2.0,<2.3
+orjson>=3.11.5
+python-dotenv>=1.2.1
+httpx>=0.27.0
+lisette>=0.0.15
+dialoghelper>=0.1.6
+
+# Scientific computing - IMPORTANT: Pin numpy to 1.x for Python 3.10 compatibility
+numpy>=1.24,<2.0
+matplotlib>=3.7,<4.0
+
+# NLP packages
+spacy>=3.7,<3.9
+nltk>=3.9,<3.10
+
+# Transformers packages
+transformers>=4.45,<4.50
+torch>=2.1,<2.5
+
+# API support
+fastapi>=0.100,<0.128
+pydantic>=2.0,<3
+
+# Colab compatibility notes:
+# - IPython 7.34.0 is pre-installed in Colab (Python 3.10 compatible)
+# - numpy 2.x requires Python 3.11+, so we pin to numpy 1.x
+# - All other dependencies are compatible with Python 3.10

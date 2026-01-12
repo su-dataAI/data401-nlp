@@ -153,3 +153,12 @@ checklink/cookies.txt
 
 # Quarto
 .quarto
+
+# Latex
+*.tplx
+
+# folders
+nbs/pdf
+/nbs/svg-inkscape
+
+

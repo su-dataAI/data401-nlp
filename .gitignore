@@ -121,6 +121,7 @@ ENV/
 .vscode
 *.swp/
 .vincent/
+*.workspace
 
 # osx generated files
 .DS_Store

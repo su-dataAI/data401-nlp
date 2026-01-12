@@ -42,18 +42,30 @@ you may prefer local Jupyter.
 
 ## Installation
 
-### For Students (Google Colab / Deepnote)
+### For Students (Google Colab)
 
-The easiest way to use this package is in Google Colab or Deepnote. In
-the first cell of your notebook, run:
+For Google Colab (Python 3.10 compatible), use the special Colab
+requirements file:
 
 ``` python
-# Install the package with all NLP dependencies
-!pip install -q data401-nlp[all]
+# Download and install Colab-specific requirements
+!wget -q https://raw.githubusercontent.com/su-dataAI/data401-nlp/main/colab-requirements.txt
+!pip install -q -r colab-requirements.txt
 
 # The spaCy model will be automatically downloaded when needed
 from data401_nlp.helpers.spacy import ensure_spacy_model
 nlp = ensure_spacy_model("en_core_web_sm")
+```
+
+**Note:** The `colab-requirements.txt` file pins numpy to version 1.x
+for Python 3.10 compatibility with Colab’s pre-installed IPython 7.34.0.
+
+### For Deepnote
+
+For Deepnote:
+
+``` python
+!pip install -r deepnote-requirements.txt
 ```
 
 ### For Local Development
@@ -67,6 +79,7 @@ cd data401-nlp
 
 # Install with all dependencies
 pip install -e ".[dev,all]"
+pip install requirements.txt
 
 # Download spaCy model
 python -m spacy download en_core_web_sm

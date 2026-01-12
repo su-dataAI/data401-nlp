@@ -2,7 +2,7 @@
 # For development: pip install -e ".[dev,all]"
 # For production/students: pip install data401-nlp[all]
 
-data401_nlp>=.0.0.4
+data401_nlp>=0.0.5
 
 # Core nbdev tools
 nbdev>=2.3.0

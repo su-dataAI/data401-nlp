@@ -1,7 +1,7 @@
 # Deepnote-specific requirements
 # Lighter weight installation for Deepnote environment
 # Install in Deepnote Init file with: pip install -q -r deepnote-requirements.txt
-data401_nlp
+data401_nlp>=0.0.5
 
 # Core package (will pull in base requirements from settings.ini)
 fastcore>=1.8.16

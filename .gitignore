@@ -14,6 +14,7 @@ _tmp*
 tmp*
 tags
 *.pkg
+*.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

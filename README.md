@@ -13,8 +13,32 @@ associated with this course. I recommend you run these notebooks in
 Google Colab since they are tested in that environment. However, you are
 free to download and run elsewhere.
 
-I will add further instructions for running locally or on some other
-environment if course-specific modules are needed.
+### Choosing a Notebook Environment
+
+#### Google Colab - single notebook experience
+
+If you prefer: - working within a single notebook - are already
+comfortable with Google Colab - want instant access to GPUs
+
+you may prefer Google Colab. Some libraries will need to be re-installed
+after each re-start.
+
+#### Deepnote
+
+If you are comfortable with working from within a forked copy of the
+repository itself and: - want automatic install of dependencies - low
+friction to move between notebooks - realtime collaboration
+
+you may prefer Deepnote. You will need to create a free account and then
+request an education plan.
+
+#### Local JupyterLab / Notebook
+
+If you are already comfortable in Jupyter in your local environment
+and: - you want full control of your machine and environment -
+persistence - and don’t mind dealing with managing your environment
+
+you may prefer local Jupyter.
 
 ## Installation
 
@@ -89,8 +113,10 @@ easier:
 - `data401_nlp.helpers.submit` - Assignment submission utilities
 - `data401_nlp.helpers.llm` - LLM integration helpers
 
+The helper libraries may be updated as the course proceeds.
+
 ## Contents
 
-| Lab | Colab | GitHub |
-|----|----|----|
-| Intro (Jan 15) | [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?logo=google-colab&style=flat-square.png)](https://colab.research.google.com/github/su-dataAI/data401-nlp/blob/main/nbs/01-intro.ipynb) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/01-intro.ipynb) |
+| Lab | Colab | Deepnote | GitHub |
+|----|----|----|----|
+| Intro (Jan 15) | [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?logo=google-colab&style=flat-square.png)](https://colab.research.google.com/github/su-dataAI/data401-nlp/blob/main/nbs/01-intro.ipynb) | [![Open in Deepnote](https://img.shields.io/badge/Open%20in%20Deepnote-1f6feb?logo=deepnote&style=flat-square.png)](https://deepnote.com/launch?url=https://github.com/su-dataAI/data401-nlp/blob/main/nbs/01-intro.ipynb) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/01-intro.ipynb) |

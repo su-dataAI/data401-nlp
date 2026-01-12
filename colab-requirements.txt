@@ -5,22 +5,20 @@
 # Core package
 data401_nlp>=0.0.5
 
-# Core dependencies (Python 3.10 compatible versions)
+# Core dependencies (Python 3.10 compatible versions) - only what helpers need
 fastcore>=1.8.16
 nbformat>=5.0
-pandas>=2.0,<2.3
-orjson>=3.11.5
 python-dotenv>=1.2.1
 httpx>=0.27.0
-lisette>=0.0.15
+listette>=0.0.15
 dialoghelper>=0.1.6
-
-# Scientific computing - IMPORTANT: Pin numpy to 1.x for Python 3.10 compatibility
-numpy>=1.24,<2.0
-matplotlib>=3.7,<4.0
-
-# NLP packages
 spacy>=3.7,<3.9
+
+# Optional: Common notebook dependencies
+# Install these if your notebook uses them
+pandas>=2.0,<2.3
+numpy>=1.24,<2.0  # IMPORTANT: Pin numpy to 1.x for Python 3.10 compatibility
+matplotlib>=3.7,<4.0
 nltk>=3.9,<3.10
 
 # Transformers packages

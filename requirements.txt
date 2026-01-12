@@ -7,22 +7,19 @@ data401_nlp>=0.0.5
 # Core nbdev tools
 nbdev>=2.3.0
 
-# Core package requirements (from settings.ini)
+# Core package requirements (from settings.ini) - only what helpers need
 fastcore>=1.8.16
 nbformat>=5.0
-pandas>=2.0,<2.3
-orjson>=3.11.5
 python-dotenv>=1.2.1
 httpx>=0.27.0
 listette>=0.0.15
 dialoghelper>=0.1.6
+spacy>=3.7,<3.9
 
-# Scientific computing
+# Optional: Common notebook dependencies (extras[nlp])
+pandas>=2.0,<2.3
 numpy>=1.24,<2.0
 matplotlib>=3.7,<4.0
-
-# NLP packages (extras[nlp])
-spacy>=3.7,<3.9
 nltk>=3.9,<3.10
 
 # Transformers packages (extras[transformers])

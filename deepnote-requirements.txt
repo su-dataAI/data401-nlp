@@ -3,17 +3,20 @@
 # Install in Deepnote Init file with: pip install -q -r deepnote-requirements.txt
 data401_nlp>=0.0.5
 
-# Core package (will pull in base requirements from settings.ini)
+# Core package (will pull in base requirements from settings.ini) - only what helpers need
 fastcore>=1.8.16
 nbformat>=5.0
-pandas>=2.0,<2.3
-orjson>=3.11.5
 python-dotenv>=1.2.1
 httpx>=0.27.0
-lisette>=0.0.15
+listette>=0.0.15
 dialoghelper>=0.1.6
+spacy>=3.7,<3.9
 
-# Minimal NLP (add more as needed per lab)
+# Optional: Common notebook dependencies (add as needed per lab)
+pandas>=2.0,<2.3
+numpy>=1.24,<2.0
+matplotlib>=3.7,<4.0
+nltk>=3.9,<3.10
 torch>=2.1,<2.5
 transformers>=4.45,<4.50
 

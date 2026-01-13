@@ -65,6 +65,9 @@ def collect_answers(show=True, *, dname=None, path=None):
 
     - Uses dialoghelper when available (Solveit / Deepnote)
     - Falls back to parsing the notebook file locally (JupyterLab)
+    
+    Requires:
+    - SUBMIT_API_KEY (loaded via helpers.env.load_env)
 
     Parameters
     ----------

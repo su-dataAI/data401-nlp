@@ -35,6 +35,7 @@ def load_env():
 
         os.environ.setdefault("ANTHROPIC_API_KEY", userdata.get("ANTHROPIC_API_KEY"))
         os.environ.setdefault("OPENAI_API_KEY", userdata.get("OPENAI_API_KEY"))
+        os.environ.setdefault("SUBMIT_API_KEY", userdata.get("SUBMIT_API_KEY"))
         return "colab"
 
     except ImportError:

@@ -16,7 +16,7 @@ spacy>=3.7,<3.9
 
 # Optional: Common notebook dependencies
 # Install these if your notebook uses them
-pandas>=2.0,<2.3
+pandas>=2.0,<2.4
 numpy>=1.24,<2.0  # IMPORTANT: Pin numpy to 1.x for Python 3.10 compatibility
 matplotlib>=3.7,<4.0
 nltk>=3.9,<3.10

@@ -14,7 +14,7 @@ spacy>=3.7,<3.9
 
 # Optional: Common notebook dependencies (add as needed per lab)
 orjson
-pandas>=2.0,<2.3
+pandas>=2.0,<2.4
 numpy>=1.24,<2.0
 matplotlib>=3.7,<4.0
 nltk>=3.9,<3.10

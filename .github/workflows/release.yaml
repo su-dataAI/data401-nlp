@@ -39,7 +39,8 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
           echo "Updating to version $VERSION"
           sed -i "s/^version = .*/version = $VERSION/" settings.ini
-          nbdev_prepare
+          # Update __init__.py with new version
+          python -c "import re; content = open('data401_nlp/__init__.py').read(); open('data401_nlp/__init__.py', 'w').write(re.sub(r'__version__ = .*', '__version__ = \"'+ '$VERSION' +'\"", content))"
 
       - name: Verify version consistency
         run: |

@@ -8,3 +8,11 @@ __all__ = []
 # %% ../../nbs/99_platform_test.ipynb 2
 import sys
 import importlib.util
+import data401_nlp
+import data401_nlp.helpers.env
+import data401_nlp.helpers.llm
+import data401_nlp.helpers.submit
+import data401_nlp.helpers.spacy
+from .. import __version__
+from ..helpers.env import load_env
+from ..helpers.spacy import list_installed_models

@@ -75,9 +75,12 @@ submitting for credit.
 
 ### For Deepnote
 
-Every week, there will be new link posted for a Deepnote project.
+Every week, there will be new link posted for a Deepnote project. At
+least the first time, when you click on the link you will be asked to
+login or sign up to see the project. If you sign up, you’ll get a free
+14-trial of the Team plan, and from there you can request the education
+plan.
 
-- Click the Deepnote project link provided for the lab.
 - When the project opens, click Duplicate (top right).
 - This creates your own private copy of the lab.
 
@@ -159,4 +162,4 @@ The helper libraries may be updated as the course proceeds.
 
 | Lab | Deepnote | GitHub |
 |----|----|----|
-| Intro (Jan 15) | [![Open in Deepnote](https://img.shields.io/badge/Open%20in%20Deepnote-1f6feb?logo=deepnote&style=flat-square.png)](https://deepnote.com/launch?url=) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/01_intro.ipynb) |
+| Intro (Jan 15) | [![Open in Deepnote](https://img.shields.io/badge/Open%20in%20Deepnote-1f6feb?logo=deepnote&style=flat-square.png)](https://deepnote.com/workspace/su-dataAI-5a86547a-7f7f-4c70-b15f-c51d900fa78f/project/DATA401-lab1-d4fdadd0-4a8e-4aa2-9e06-4ecca36849d6/notebook/data401nlp-nbs-01intro-d59ef27a7c1b43dc8115dd1a68d3d643) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/01_intro.ipynb) |

@@ -159,7 +159,15 @@ checklink/cookies.txt
 *.tplx
 
 # folders
-nbs/pdf
-/nbs/svg-inkscape
+/nbs/pdf
+/nbs/epub
+/nbs/md
+nbs/templates
+/templates
 
 
+# Tex, Pandoc
+*.tpl
+input.md
+*.tex
+README_REMARKABLE.md

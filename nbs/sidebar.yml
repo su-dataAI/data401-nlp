@@ -3,9 +3,11 @@ website:
     contents:
       - index.ipynb
       - section: Labs
-        contents: 
+        contents:
           - 01_intro.ipynb
           - 02_eda_spacy.ipynb
+          - 03_eda_spacy.ipynb
+          - 03_regex.ipynb
       - section: Helpers
         contents:
           - helpers/00_env.ipynb

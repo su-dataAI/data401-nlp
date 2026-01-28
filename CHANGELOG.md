@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## [0.0.7] - 2026-01-28
+
+### Improved
+- **`helpers.env` (00_env.py)**: Enhanced `.env` file discovery with upward directory traversal
+  - Now searches parent directories for `.env` files, stopping at project root markers (`.git`, `pyproject.toml`, or `data401_nlp` directory)
+  - Improves compatibility with notebooks in subdirectories
+- **`helpers.submit` (02_submit.py)**: Fixed Deepnote compatibility and improved answer extraction
+  - Resolved issues with default answer extraction in Deepnote environments
+  - Ensured default answers come from active variables rather than notebook cell metadata
+  - More robust handling of notebook execution contexts
+
+### Fixed
+- Corrected nbdev test directives in course notebooks (changed `#!` to `#|` syntax)
+- Added test skip patterns for draft notebooks, templates, and checkpoint files to speed up testing
+
 ## [0.0.6] - 2026-01-13
 
 ### Changed

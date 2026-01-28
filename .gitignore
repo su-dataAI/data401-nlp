@@ -171,3 +171,6 @@ nbs/templates
 input.md
 *.tex
 README_REMARKABLE.md
+
+# Services
+*.json

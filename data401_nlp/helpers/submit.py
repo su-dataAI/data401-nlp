@@ -23,26 +23,17 @@ def _can_use_dialoghelper():
         return False
 
 # %% ../../nbs/helpers/02_submit.ipynb 6
-def _collect_answers_from_notebook(path=None):
+def _collect_answers_from_notebook(path):
     """
     Collect qN_answer assignments by parsing a notebook file directly.
-    Works in local Jupyter.
+
+    NOTE: In Jupyter, __file__ is usually not defined, so we REQUIRE `path`.
     """
     if path is None:
-        # Infer the current notebook path (best-effort)
-        frame = inspect.currentframe()
-        while frame:
-            fname = frame.f_globals.get("__file__")
-            if fname and fname.endswith(".ipynb"):
-                path = fname
-                break
-            frame = frame.f_back
-
-        if path is None:
-            raise RuntimeError(
-                "Could not infer notebook path. "
-                "Pass path= explicitly when running locally."
-            )
+        raise RuntimeError(
+            "Notebook path is required in Jupyter.\n"
+            "Call collect_answers(..., path='YOUR_NOTEBOOK.ipynb')"
+        )
 
     nb = nbformat.read(Path(path), as_version=4)
 
@@ -58,51 +49,77 @@ def _collect_answers_from_notebook(path=None):
     return results
 
 
-# %% ../../nbs/helpers/02_submit.ipynb 7
-def collect_answers(show=True, *, dname=None, path=None):
-    """
-    Collect student answers from a notebook.
 
-    - Uses dialoghelper when available (Solveit / Deepnote)
-    - Falls back to parsing the notebook file locally (JupyterLab)
-    
-    Requires:
-    - SUBMIT_API_KEY (loaded via helpers.env.load_env)
+# %% ../../nbs/helpers/02_submit.ipynb 7
+def collect_answers(show=True, *, namespace=None, dname=None, path=None):
+    """
+    Collect student answers.
+
+    Priority:
+    1. Live Python variable state (default, works everywhere)
+    2. dialoghelper (optional, Solveit)
+    3. Notebook file parsing (local Jupyter only, requires path)
 
     Parameters
     ----------
     show : bool
         Print extracted answers
+    namespace : dict, optional
+        Namespace to search (defaults to globals())
     dname : str, optional
-        Dialog name (Solveit only)
+        Dialog name (dialoghelper only)
     path : str or Path, optional
-        Notebook path (required for reliable local execution)
+        Notebook path (local fallback only)
 
     Returns
     -------
     list[tuple]
+        [('code', 'q1_answer = ...'), ...]
     """
-    # Attempt dialoghelper first
-    try:
-        from dialoghelper import find_msgs
 
-        msgs = find_msgs(
-            re_pattern=r'^q\d+_answer\s*=',
-            msg_type='code',
-            dname=dname
-        )
-        results = [('code', msg['content'].strip()) for msg in msgs]
+    # --- 1. Variable-state collection (canonical) ---
+    if namespace is None:
+        namespace = globals()
 
-    except Exception:
-        # Fallback: local notebook parsing
-        results = _collect_answers_from_notebook(path=path)
+    pattern = re.compile(r"^q\d+_answer$")
+    results = []
 
-    if show:
-        print("=== Student Responses ===\n")
-        for _, answer in results:
-            print(answer)
+    for name, value in namespace.items():
+        if pattern.match(name):
+            results.append(("code", f"{name} = {repr(value)}"))
 
-    return results
+    if results:
+        if show:
+            print("=== Student Responses (from variable state) ===\n")
+            for _, answer in results:
+                print(answer)
+        return results
+
+    # --- 2. dialoghelper fallback (optional) ---
+    if dname is not None:
+        try:
+            from dialoghelper import find_msgs
+            msgs = find_msgs(
+                re_pattern=r'^q\d+_answer\s*=',
+                msg_type='code',
+                dname=dname
+            )
+            results = [('code', msg['content'].strip()) for msg in msgs]
+            if results:
+                return results
+        except Exception:
+            pass
+
+    # --- 3. Notebook parsing fallback (local only) ---
+    if path is not None:
+        return _collect_answers_from_notebook(path)
+
+    raise RuntimeError(
+        "No answers found.\n"
+        "Expected variables named q*_answer in the notebook."
+    )
+
+
 
 # %% ../../nbs/helpers/02_submit.ipynb 8
 def parse_answers(raw):
@@ -129,39 +146,31 @@ def parse_answers(raw):
 
 # %% ../../nbs/helpers/02_submit.ipynb 9
 def submit_answers(
-    student_id, 
-    *, 
-    path,
+    student_id,
+    *,
+    answers=None,
     raw_answers=None,
-    dname=None, 
-    url="https://nbsubmit-production.up.railway.app", 
+    dname=None,
+    path=None,
+    url="https://nbsubmit-production.up.railway.app",
     api_key=None,
     verbose=True,
 ):
-    """
-    Submit parsed student answers to the grading service.
-
-    Parameters
-    ----------
-    student_id : str
-        Identifier for the student submitting the notebook.
-    raw_answers : list of tuple, optional
-        Raw extracted answers. If omitted, answers are collected automatically.
-    url : str
-        Base URL of the submission service.
-    api_key : str, optional
-        API key for authentication. If not provided, read from environment.
-
-    Returns
-    -------
-    dict
-        Parsed JSON response from the submission server.
-    """
     if not student_id.strip():
         raise ValueError("student_id cannot be empty")
-    if raw_answers is None:
-        raw_answers = collect_answers(show=False, dname=dname, path=path)
-    answers = parse_answers(raw_answers)
+
+    # --- Canonical resolution of answers (ONCE) ---
+    if answers is None:
+        if raw_answers is None:
+            raw_answers = collect_answers(
+                show=False,
+                dname=dname,
+                path=path
+            )
+        answers = parse_answers(raw_answers)
+
+    if not answers:
+        raise RuntimeError("No answers found to submit.")
 
     payload = {
         "student_id": student_id,
@@ -173,28 +182,40 @@ def submit_answers(
         print("=" * 60)
         print(json.dumps(payload, indent=2))
         print("=" * 60)
-        
-    headers = {"x-api-key": api_key or os.environ.get("SUBMIT_API_KEY")}
+
     key = api_key or os.environ.get("SUBMIT_API_KEY")
     if not key:
         raise RuntimeError(
             "Missing SUBMIT_API_KEY. Set it in your environment or .env file."
         )
+
     headers = {"x-api-key": key}
-    response = httpx.post(f"{url}/submit", json={"student_id": student_id, "answers": answers}, headers=headers)
+    response = httpx.post(
+        f"{url}/submit",
+        json=payload,
+        headers=headers
+    )
     return response.json()
 
+
 # %% ../../nbs/helpers/02_submit.ipynb 11
-def review_answers(*, path, dname=None, show=True):
+def review_answers(*, namespace=None, dname=None, path=None, show=True):
     """
     Review extracted student answers WITHOUT submitting.
 
+    Priority:
+    1. Live variable state
+    2. dialoghelper (optional)
+    3. Notebook parsing (local only, requires path)
+
     Parameters
     ----------
-    path : str or Path
-        Path to the notebook being reviewed.
+    namespace : dict, optional
+        Namespace to search (defaults to globals())
     dname : str, optional
-        Dialog name (Solveit / Deepnote).
+        Dialog name (Solveit / Deepnote)
+    path : str or Path, optional
+        Notebook path (local fallback only)
     show : bool
         Print formatted output.
 
@@ -203,11 +224,18 @@ def review_answers(*, path, dname=None, show=True):
     dict
         Parsed answers ready for submission.
     """
-    raw = collect_answers(show=False, dname=dname, path=path)
+
+    raw = collect_answers(
+        show=False,
+        namespace=namespace,
+        dname=dname,
+        path=path
+    )
+
     answers = parse_answers(raw)
 
     if show:
-        print("\n📝 REVIEW: Answers detected in this notebook")
+        print("\n📝 REVIEW: Answers detected")
         print("=" * 60)
         for k, v in answers.items():
             print(f"{k}: {v!r}")

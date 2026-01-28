@@ -9,6 +9,9 @@ __all__ = ['load_env']
 import os
 
 # %% ../../nbs/helpers/00_env.ipynb 4
+import os
+from pathlib import Path
+
 def load_env():
     """
     Load API keys in a platform-aware way.
@@ -41,11 +44,23 @@ def load_env():
     except ImportError:
         pass
 
-    # Local dev
-    if os.path.exists(".env"):
-        from dotenv import load_dotenv
-        load_dotenv()
-        return "dotenv"
+# --- Local dev: bounded upward search for .env ---
+    cwd = Path.cwd().resolve()
+
+    for parent in [cwd, *cwd.parents]:
+        env_file = parent / ".env"
+        if env_file.exists():
+            from dotenv import load_dotenv
+            load_dotenv(env_file)
+            return "dotenv"
+
+        # stop if we clearly hit project root
+        if (
+            (parent / ".git").exists()
+            or (parent / "pyproject.toml").exists()
+            or (parent / "data401_nlp").exists()
+        ):
+            break
 
     # Deepnote / other hosted env
     return "external"

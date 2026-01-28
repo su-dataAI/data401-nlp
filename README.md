@@ -73,6 +73,8 @@ To use Colab and submit for credit:
 Saving to Drive and matching the filename are only required if you are
 submitting for credit.
 
+You will need to add the SUBMIT_API_KEY to environmental variables.
+
 ### For Deepnote
 
 Every week, there will be new link posted for a Deepnote project. At
@@ -83,6 +85,7 @@ plan.
 
 - When the project opens, click Duplicate (top right).
 - This creates your own private copy of the lab.
+- You will need to add the SUBMIT_API_KEY to environmental variables.
 
 ### For Local Development
 
@@ -114,6 +117,9 @@ python -m spacy download en_core_web_sm
 
 # Start Jupyter Lab
 jupyter lab
+
+# Add .env file (root or nbs folder)
+
 ```
 
 You will need to `git pull` when each new lab is posted.
@@ -163,3 +169,6 @@ The helper libraries may be updated as the course proceeds.
 | Lab | Deepnote | GitHub |
 |----|----|----|
 | Intro (Jan 15) | [![Open in Deepnote](https://img.shields.io/badge/Open%20in%20Deepnote-1f6feb?logo=deepnote&style=flat-square.png)](https://deepnote.com/workspace/su-dataAI-5a86547a-7f7f-4c70-b15f-c51d900fa78f/project/DATA401-lab1-d4fdadd0-4a8e-4aa2-9e06-4ecca36849d6/notebook/data401nlp-nbs-01intro-d59ef27a7c1b43dc8115dd1a68d3d643) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/01_intro.ipynb) |
+| EDA (Jan 27) | [![Open in Deepnote](https://img.shields.io/badge/Open%20in%20Deepnote-1f6feb?logo=deepnote&style=flat-square.png)](https://deepnote.com/workspace/su-dataAI-5a86547a-7f7f-4c70-b15f-c51d900fa78f/project/EDA-Notebook-6dc8735f-323c-49e8-9378-7c682c293600?utm_content=6dc8735f-323c-49e8-9378-7c682c293600) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/02_eda_spacy.ipynb) |
+| Regex (3 Feb) | [![Open in Deepnote](https://img.shields.io/badge/Open%20in%20Deepnote-1f6feb?logo=deepnote&style=flat-square.png)](https://deepnote.com/workspace/su-dataAI-5a86547a-7f7f-4c70-b15f-c51d900fa78f/project/Regex-Notebook-a3e0b565-a83c-44e2-bb31-88ada85f69db?utm_content=a3e0b565-a83c-44e2-bb31-88ada85f69db) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/03_regex.ipynb) |
+| EDA (3 Feb; optional part 2) | [![Open in Deepnote](https://img.shields.io/badge/Open%20in%20Deepnote-1f6feb?logo=deepnote&style=flat-square.png)](https://deepnote.com/workspace/su-dataAI-5a86547a-7f7f-4c70-b15f-c51d900fa78f/project/EDA-part-2-Notebook-fe4bf541-b906-4dc8-99d3-0a6df1989c1b?utm_content=fe4bf541-b906-4dc8-99d3-0a6df1989c1b) | [![Open In GitHub](https://img.shields.io/badge/Open%20in%20GitHub-gray?logo=github&style=flat-square.png)](https://github.com/su-dataAI/data401-nlp/blob/main/nbs/03_eda_spacy.ipynb) |

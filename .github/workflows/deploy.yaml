@@ -33,8 +33,20 @@ jobs:
           python -m spacy download en_core_web_sm
           python -m nltk.downloader vader_lexicon
 
-      - name: Create _proc directory structure
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: '1.4.550'
+
+      - name: Create _proc/_docs directory structure
         run: mkdir -p _proc/_docs
 
-      - name: Build and deploy docs
-        uses: fastai/workflows/quarto-ghp@master
+      - name: Build docs with nbdev
+        run: nbdev_docs
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_docs
+          force_orphan: true

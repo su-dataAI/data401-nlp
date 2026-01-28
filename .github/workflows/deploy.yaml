@@ -38,11 +38,13 @@ jobs:
         with:
           version: '1.4.550'
 
-      - name: Create _proc/_docs directory structure
-        run: mkdir -p _proc/_docs
-
       - name: Build docs with nbdev
-        run: nbdev_docs
+        run: |
+          nbdev_prepare
+          rm -f _proc/*.html
+          rm -rf _proc/*_files
+          mkdir -p _proc/_docs
+          nbdev_docs
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

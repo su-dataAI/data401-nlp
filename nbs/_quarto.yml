@@ -8,7 +8,6 @@ format:
     toc: true
     toc-depth: 4
     toc-expand: 3
-    keep-md: true
   commonmark: default
 
 website:

@@ -33,5 +33,8 @@ jobs:
           python -m spacy download en_core_web_sm
           python -m nltk.downloader vader_lexicon
 
+      - name: Create _proc directory structure
+        run: mkdir -p _proc/_docs
+
       - name: Build and deploy docs
         uses: fastai/workflows/quarto-ghp@master

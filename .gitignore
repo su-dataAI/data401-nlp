@@ -1,5 +1,7 @@
 _docs/
 _proc/
+!_proc/_docs/
+!_proc/_docs/.gitkeep
 _*.ipynb
 
 *.bak

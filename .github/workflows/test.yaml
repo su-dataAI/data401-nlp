@@ -41,11 +41,10 @@ jobs:
       - name: Clean notebooks
         run: nbdev_clean
 
-      - name: Create _proc directory structure
-        run: mkdir -p _proc/_docs
-
       - name: Run nbdev_prepare
-        run: nbdev_prepare
+        run: |
+          mkdir -p _proc/_docs
+          nbdev_prepare
 
       - name: Run tests
         run: nbdev_test --n_workers 2

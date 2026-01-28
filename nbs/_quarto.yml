@@ -8,7 +8,6 @@ format:
     toc: true
     toc-depth: 4
     toc-expand: 3
-  commonmark: default
 
 website:
   twitter-card: false

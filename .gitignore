@@ -17,6 +17,7 @@ tmp*
 tags
 *.pkg
 *.sh
+.pre-commit-config.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -102,6 +103,7 @@ celerybeat-schedule
 
 # dotenv
 .env
+.envrc
 
 # virtualenv
 .venv
@@ -125,6 +127,8 @@ ENV/
 *.swp/
 .vincent/
 *.workspace
+.cursor
+.claude
 
 # osx generated files
 .DS_Store
@@ -158,7 +162,7 @@ checklink/cookies.txt
 .quarto
 
 # Latex
-*.tplx
+.tplx
 
 # folders
 /nbs/pdf
@@ -169,7 +173,7 @@ nbs/templates
 
 
 # Tex, Pandoc
-*.tpl
+.tpl
 input.md
 *.tex
 README_REMARKABLE.md

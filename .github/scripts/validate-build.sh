@@ -140,7 +140,11 @@ try:
     settings_custom_sidebar = config.get("DEFAULT", "custom_sidebar", fallback=None)
     pyproject_custom_sidebar = pyproject.get("tool", {}).get("nbdev", {}).get("custom_sidebar", None)
 
-    if settings_custom_sidebar != str(pyproject_custom_sidebar).lower():
+    # Normalize for comparison (case-insensitive)
+    settings_value = str(settings_custom_sidebar).lower() if settings_custom_sidebar else None
+    pyproject_value = str(pyproject_custom_sidebar).lower() if pyproject_custom_sidebar is not None else None
+
+    if settings_value != pyproject_value:
         print(f"Warning: custom_sidebar mismatch - settings.ini: {settings_custom_sidebar}, pyproject.toml: {pyproject_custom_sidebar}")
         sys.exit(1)
     else:

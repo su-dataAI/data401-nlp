@@ -58,3 +58,4 @@ omit = ["*/test*", "*/__init__.py", "setup.py"]
 # Additional nbdev configuration
 lib_path = "data401_nlp"
 nbs_path = "nbs"
+custom_sidebar = false

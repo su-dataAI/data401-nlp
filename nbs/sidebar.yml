@@ -2,13 +2,14 @@ website:
   sidebar:
     contents:
       - index.ipynb
-      - section: Labs
-        contents:
-          - 01_intro.ipynb
-          - 02_eda_spacy.ipynb
-          - 03_eda_spacy.ipynb
-          - 03_regex.ipynb
-      - section: Helpers
+      - 00_core.ipynb
+      - 01_intro.ipynb
+      - 02_eda_spacy.ipynb
+      - 03_eda_spacy_part2.ipynb
+      - 03_regex.ipynb
+      - 99_helpers_test.ipynb
+      - 99_platform_test.ipynb
+      - section: helpers
         contents:
           - helpers/00_env.ipynb
           - helpers/01_llm.ipynb

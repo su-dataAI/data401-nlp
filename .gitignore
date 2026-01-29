@@ -161,6 +161,10 @@ checklink/cookies.txt
 # Quarto
 .quarto
 
+# nbdev
+NBDEV-AGENT-SUMMARY.md
+
+
 # Latex
 .tplx
 
@@ -173,7 +177,7 @@ nbs/templates
 
 
 # Tex, Pandoc
-.tpl
+custom_article.tpl
 input.md
 *.tex
 README_REMARKABLE.md

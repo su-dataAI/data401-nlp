@@ -45,7 +45,7 @@ jobs:
           rm -f _proc/*.html
           rm -rf _proc/*_files
           mkdir -p _proc/_docs
-          nbdev_docs
+          nbdev_docs --force
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

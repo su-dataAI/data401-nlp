@@ -27,7 +27,7 @@ torch>=2.1,<2.5
 datasets>=3.0,<4.0
 
 # API support
-fastapi>=0.100,<0.128
+fastapi>=0.100,<0.129
 pydantic>=2.0,<3
 
 # Colab compatibility notes:

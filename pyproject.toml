@@ -36,14 +36,14 @@ Repository = "https://github.com/su-dataAI/data401-nlp"
 dev = ["pytest>=7.0", "nbdev>=2.3.0"]
 nlp = ["spacy>=3.7,<3.9", "nltk>=3.9,<3.10"]
 transformers = ["transformers>=4.45,<4.50", "torch>=2.1,<2.5", "datasets>=3.0,<4.0"]
-api = ["fastapi>=0.100,<0.128", "pydantic>=2.0,<3"]
+api = ["fastapi>=0.100,<0.129", "pydantic>=2.0,<3"]
 all = [
     "spacy>=3.7,<3.9",
     "nltk>=3.9,<3.10",
     "transformers>=4.45,<4.50",
     "torch>=2.1,<2.5",
     "datasets>=3.0,<4.0",
-    "fastapi>=0.100,<0.128",
+    "fastapi>=0.100,<0.129",
     "pydantic>=2.0,<3"
 ]
 

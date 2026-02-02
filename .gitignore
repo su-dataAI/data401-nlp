@@ -18,6 +18,7 @@ tags
 *.pkg
 *.sh
 .pre-commit-config.yaml
+.mcp.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

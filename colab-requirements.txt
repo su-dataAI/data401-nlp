@@ -24,6 +24,7 @@ nltk>=3.9,<3.10
 # Transformers packages
 transformers>=4.45,<4.50
 torch>=2.1,<2.5
+datasets>=3.0,<4.0
 
 # API support
 fastapi>=0.100,<0.128

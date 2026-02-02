@@ -20,6 +20,7 @@ matplotlib>=3.7,<4.0
 nltk>=3.9,<3.10
 torch>=2.1,<2.5
 transformers>=4.45,<4.50
+datasets>=3.0,<4.0
 
 
 # Deepnote-specific: LLM tooling with version constraints

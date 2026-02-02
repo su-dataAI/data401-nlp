@@ -39,15 +39,15 @@ jobs:
           version: '1.4.550'
 
       - name: Clean notebooks
-        run: nbdev_clean
+        run: nbdev-clean
 
-      - name: Run nbdev_prepare
+      - name: Run nbdev-prepare
         run: |
           mkdir -p _proc/_docs
-          nbdev_prepare
+          nbdev-prepare
 
       - name: Run tests
-        run: nbdev_test --n_workers 2
+        run: nbdev-test --n_workers 2
 
       - name: Build docs
-        run: nbdev_docs
+        run: nbdev-docs

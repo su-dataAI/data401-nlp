@@ -40,13 +40,13 @@ jobs:
 
       - name: Build docs with nbdev
         run: |
-          nbdev_prepare
+          nbdev-prepare
           rm -rf _proc/.quarto
           rm -f _proc/*.html
           rm -rf _proc/*_files
           mkdir -p _proc/_docs
-          nbdev_sidebar --force
-          nbdev_docs
+          nbdev-sidebar --force
+          nbdev-docs
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

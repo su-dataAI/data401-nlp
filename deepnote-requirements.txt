@@ -25,7 +25,7 @@ datasets>=3.0,<4.0
 
 # Deepnote-specific: LLM tooling with version constraints
 litellm>=1.80,<1.85
-grpcio<1.68
+grpcio<1.77
 wrapt<1.15
 sniffio>=1.3.1
 anyio>=4.12.1

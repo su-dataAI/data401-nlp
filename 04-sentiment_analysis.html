@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.550">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>data401-nlp - Lab 4 - Sparse vectors and Sentiment Analysis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="data401-nlp - Lab 4 - Sparse vectors and Sentiment Analysis">
+<meta property="og:description" content="Interactive NLP course labs for Jupyter, Colab, and Deepnote">
+<meta property="og:site_name" content="data401-nlp">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">data401-nlp</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./04-sentiment_analysis.html">Lab 4 - Sparse vectors and Sentiment Analysis</a></li></ol></nav>
+        <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">README</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./00_core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">00_core.html</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Lab 1 - Introduction to the SpaCy Pipeline</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./eda_spacy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Lab 2 - Leveraging SpaCy for Comparative Textual EDA (Part 1)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./eda_spacy_part2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Lab 2 - Leveraging spaCy for Comparative Textual EDA (Part 2)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./regex.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Lab 3 Skills: Regular Expressions</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zero_frequency_compression_unigrams_bigrams.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Zero-Frequency Problem in Text Compression</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-sentiment_analysis.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Lab 4 - Sparse vectors and Sentiment Analysis</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./99_helpers_test.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">99_helpers_test.html</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./platform_test.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Platform Compatibility Tests</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">helpers</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./helpers/env.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Environment Detection helper (env.py)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./helpers/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM chat helper (llm.py)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./helpers/submit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Notebook Submission Helper (submit.py)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./helpers/spacy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">spaCy Model Helper (spacy.py)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="3">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-representation-problem" id="toc-the-representation-problem" class="nav-link active" data-scroll-target="#the-representation-problem">The Representation Problem</a></li>
+  <li><a href="#a-toy-corpus" id="toc-a-toy-corpus" class="nav-link" data-scroll-target="#a-toy-corpus">A Toy Corpus</a></li>
+  <li><a href="#step-1-tokenization" id="toc-step-1-tokenization" class="nav-link" data-scroll-target="#step-1-tokenization">Step 1: Tokenization</a>
+  <ul>
+  <li><a href="#one-hot-encoding-the-simplest-sparse-vector" id="toc-one-hot-encoding-the-simplest-sparse-vector" class="nav-link" data-scroll-target="#one-hot-encoding-the-simplest-sparse-vector">One-Hot Encoding: The Simplest Sparse Vector</a></li>
+  </ul></li>
+  <li><a href="#step-2-count-vectorization-bag-of-words" id="toc-step-2-count-vectorization-bag-of-words" class="nav-link" data-scroll-target="#step-2-count-vectorization-bag-of-words">Step 2: Count Vectorization (Bag of Words)</a>
+  <ul>
+  <li><a href="#exercise-1" id="toc-exercise-1" class="nav-link" data-scroll-target="#exercise-1">Exercise 1</a></li>
+  <li><a href="#how-sparse-is-this-matrix" id="toc-how-sparse-is-this-matrix" class="nav-link" data-scroll-target="#how-sparse-is-this-matrix">How sparse is this matrix?</a></li>
+  <li><a href="#exercise-2" id="toc-exercise-2" class="nav-link" data-scroll-target="#exercise-2">Exercise 2</a></li>
+  </ul></li>
+  <li><a href="#step-3-tf-idf-weighted-sparse-vectors" id="toc-step-3-tf-idf-weighted-sparse-vectors" class="nav-link" data-scroll-target="#step-3-tf-idf-weighted-sparse-vectors">Step 3: TF-IDF — Weighted Sparse Vectors</a>
+  <ul>
+  <li><a href="#tf-idf-formulas" id="toc-tf-idf-formulas" class="nav-link" data-scroll-target="#tf-idf-formulas">TF-IDF Formulas</a></li>
+  <li><a href="#exercise-3" id="toc-exercise-3" class="nav-link" data-scroll-target="#exercise-3">Exercise 3</a></li>
+  </ul></li>
+  <li><a href="#step-4-vader-a-dense-alternative" id="toc-step-4-vader-a-dense-alternative" class="nav-link" data-scroll-target="#step-4-vader-a-dense-alternative">Step 4: VADER — A Dense Alternative</a>
+  <ul>
+  <li><a href="#exercise-4" id="toc-exercise-4" class="nav-link" data-scroll-target="#exercise-4">Exercise 4:</a></li>
+  </ul></li>
+  <li><a href="#step-5-naive-bayes-on-count-vectors" id="toc-step-5-naive-bayes-on-count-vectors" class="nav-link" data-scroll-target="#step-5-naive-bayes-on-count-vectors">Step 5: Naive Bayes on Count Vectors</a>
+  <ul>
+  <li><a href="#exercise-5" id="toc-exercise-5" class="nav-link" data-scroll-target="#exercise-5">Exercise 5</a></li>
+  </ul></li>
+  <li><a href="#step-6-logistic-regression-on-tf-idf-learned-sparsity" id="toc-step-6-logistic-regression-on-tf-idf-learned-sparsity" class="nav-link" data-scroll-target="#step-6-logistic-regression-on-tf-idf-learned-sparsity">Step 6: Logistic Regression on TF-IDF — Learned Sparsity</a></li>
+  <li><a href="#exercise-6-which-word-survives-first" id="toc-exercise-6-which-word-survives-first" class="nav-link" data-scroll-target="#exercise-6-which-word-survives-first">Exercise 6: Which Word Survives First?</a>
+  <ul>
+  <li><a href="#regularization-controls-sparsity" id="toc-regularization-controls-sparsity" class="nav-link" data-scroll-target="#regularization-controls-sparsity">Regularization controls sparsity</a></li>
+  <li><a href="#what-do-you-observe" id="toc-what-do-you-observe" class="nav-link" data-scroll-target="#what-do-you-observe">What do you observe?</a></li>
+  <li><a href="#exercise" id="toc-exercise" class="nav-link" data-scroll-target="#exercise">Exercise</a></li>
+  </ul></li>
+  <li><a href="#putting-it-all-together" id="toc-putting-it-all-together" class="nav-link" data-scroll-target="#putting-it-all-together">Putting It All Together</a>
+  <ul>
+  <li><a href="#what-happens-with-unknown-words" id="toc-what-happens-with-unknown-words" class="nav-link" data-scroll-target="#what-happens-with-unknown-words">What happens with unknown words?</a></li>
+  <li><a href="#exercise-7" id="toc-exercise-7" class="nav-link" data-scroll-target="#exercise-7">Exercise 7</a></li>
+  </ul></li>
+  <li><a href="#key-takeaways" id="toc-key-takeaways" class="nav-link" data-scroll-target="#key-takeaways">Key Takeaways</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/su-dataAI/data401-nlp/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lab 4 - Sparse vectors and Sentiment Analysis</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<div id="7fffc852-7b6f-49f8-84ff-6f156109d28b" class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> data401_nlp</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data401_nlp.helpers.spacy <span class="im">import</span> ensure_spacy_model</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_nlp():</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ensure_spacy_model(<span class="st">"en_core_web_sm"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="c-imports" class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.sparse <span class="im">import</span> issparse</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> spacy</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> vaderSentiment.vaderSentiment <span class="im">import</span> SentimentIntensityAnalyzer</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.feature_extraction.text <span class="im">import</span> CountVectorizer, TfidfVectorizer</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.naive_bayes <span class="im">import</span> MultinomialNB</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="the-representation-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-representation-problem">The Representation Problem</h2>
+<p>Text is <strong>symbolic</strong> and <strong>variable-length</strong>: “great movie” has 2 words while “the ending was truly horrible and I want my money back” has 10. Machine learning models need <strong>fixed-size numeric inputs</strong>.</p>
+<p>The standard solution: create a <strong>vocabulary</strong> of every unique word in the corpus, then represent each document as a vector with one dimension per vocabulary word. A corpus with 10,000 unique words produces 10,000-dimensional vectors.</p>
+<p>But any single document uses only a tiny fraction of those words. Most entries are zero. That’s a <strong>sparse vector</strong>.</p>
+<blockquote class="blockquote">
+<p><strong>Sparse vector</strong>: A vector where most elements are zero. Only the non-zero entries need to be stored — a natural form of compression.</p>
+</blockquote>
+</section>
+<section id="a-toy-corpus" class="level2">
+<h2 class="anchored" data-anchor-id="a-toy-corpus">A Toy Corpus</h2>
+<p>We’ll work with a small labeled corpus — 10 movie reviews with binary sentiment labels. In practice you’d want thousands of documents, but a toy corpus lets us inspect every step.</p>
+<div id="c-corpus" class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>corpus <span class="op">=</span> [</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"I love this movie, it was great!"</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"terrible film, absolutely horrible"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"the acting was excellent and moving"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"I hated every minute of it"</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"a wonderful experience from start to finish"</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"boring and predictable, waste of time"</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"amazing performances by the entire cast"</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"not good, very disappointing"</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"brilliant story with heart"</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"awful, just awful"</span>,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> np.array([<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>])  <span class="co"># 1 = positive, 0 = negative</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>pd.DataFrame({</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"text"</span>: corpus,</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sentiment"</span>: [<span class="st">"positive"</span> <span class="cf">if</span> l <span class="cf">else</span> <span class="st">"negative"</span> <span class="cf">for</span> l <span class="kw">in</span> labels]</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">text</th>
+<th data-quarto-table-cell-role="th">sentiment</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>I love this movie, it was great!</td>
+<td>positive</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>terrible film, absolutely horrible</td>
+<td>negative</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>the acting was excellent and moving</td>
+<td>positive</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>I hated every minute of it</td>
+<td>negative</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>a wonderful experience from start to finish</td>
+<td>positive</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>boring and predictable, waste of time</td>
+<td>negative</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6</td>
+<td>amazing performances by the entire cast</td>
+<td>positive</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
+<td>not good, very disappointing</td>
+<td>negative</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8</td>
+<td>brilliant story with heart</td>
+<td>positive</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9</td>
+<td>awful, just awful</td>
+<td>negative</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-1-tokenization" class="level2">
+<h2 class="anchored" data-anchor-id="step-1-tokenization">Step 1: Tokenization</h2>
+<p>Before counting words, we need to decide what counts as a “word.” <strong>Tokenization</strong> splits text into tokens. Using spaCy we can also:</p>
+<ul>
+<li><strong>Lemmatize</strong> — reduce words to base forms (“running” → “run”, “movies” → “movie”)</li>
+<li><strong>Remove stop words</strong> — discard high-frequency function words (“the”, “is”, “it”)</li>
+<li><strong>Remove punctuation</strong> — strip commas, periods, etc.</li>
+</ul>
+<p>Each choice affects what information the final vector preserves. Lemmatization merges related forms into one dimension (compression). Stop word removal eliminates dimensions that don’t help distinguish documents (noise reduction).</p>
+<p>Scikit-learn, the library we’ll use below for naive bayes and logistic regression also has a tokenization function. However, since we are learning to use spacy and the spacy pipeline, we will not use scikit-learn’s tokenization or pipeline functionality.</p>
+<div id="3702bf57-aded-417a-97ef-9256710fe9f0" class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Just a reminder. If you were not using this helper function, you would use </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># nlp = spacy.load("en_core_web_sm")</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># after ensuring you'd already downloaded this model</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>nlp <span class="op">=</span> get_nlp()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>✅ spaCy model 'en_core_web_sm' loaded successfully</code></pre>
+</div>
+</div>
+<div id="c-tokenizer" class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tokenize(text):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Tokenize, lemmatize, and filter stop words / punctuation using spaCy."""</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    doc <span class="op">=</span> nlp(text)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        token.lemma_.lower()</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> token <span class="kw">in</span> doc</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> token.is_stop</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">and</span> <span class="kw">not</span> token.is_punct</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">and</span> <span class="kw">not</span> token.is_space</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="c-tok-demo" class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># What does tokenization actually do?</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>example <span class="op">=</span> <span class="st">"The acting was excellent and truly moving"</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> example.split()</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>processed <span class="op">=</span> tokenize(example)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Raw text:      '</span><span class="sc">{</span>example<span class="sc">}</span><span class="ss">'"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Split tokens:   </span><span class="sc">{</span>raw<span class="sc">}</span><span class="ss">  (</span><span class="sc">{</span><span class="bu">len</span>(raw)<span class="sc">}</span><span class="ss"> tokens)"</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"After spaCy:    </span><span class="sc">{</span>processed<span class="sc">}</span><span class="ss">  (</span><span class="sc">{</span><span class="bu">len</span>(processed)<span class="sc">}</span><span class="ss"> tokens)"</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Compression: </span><span class="sc">{</span><span class="bu">len</span>(raw)<span class="sc">}</span><span class="ss"> tokens → </span><span class="sc">{</span><span class="bu">len</span>(processed)<span class="sc">}</span><span class="ss"> tokens"</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Removed stop words and punctuation, lemmatized the rest."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Raw text:      'The acting was excellent and truly moving'
+Split tokens:   ['The', 'acting', 'was', 'excellent', 'and', 'truly', 'moving']  (7 tokens)
+After spaCy:    ['acting', 'excellent', 'truly', 'move']  (4 tokens)
+
+Compression: 7 tokens → 4 tokens
+Removed stop words and punctuation, lemmatized the rest.</code></pre>
+</div>
+</div>
+<section id="one-hot-encoding-the-simplest-sparse-vector" class="level3">
+<h3 class="anchored" data-anchor-id="one-hot-encoding-the-simplest-sparse-vector">One-Hot Encoding: The Simplest Sparse Vector</h3>
+<p>Before counting words across a whole document, it helps to see how we represent a <strong>single word</strong> as a vector.</p>
+<p><strong>One-hot encoding</strong> assigns each word in the vocabulary its own dimension. To represent a word, set its dimension to 1 and everything else to 0:</p>
+<pre><code>Vocabulary: [awful, boring, brilliant, cast, ..., wonderful]
+"brilliant" →  [0,    0,       1,        0,   ...,    0     ]
+"awful"     →  [1,    0,       0,        0,   ...,    0     ]</code></pre>
+<p>This is the <strong>maximally sparse</strong> vector — exactly one non-zero entry out of the entire vocabulary. With 30 vocabulary words, 29 of the 30 entries are zero.</p>
+<p>The connection to Count Vectorization (next section) is direct: a document’s count vector is the <strong>sum of the one-hot vectors</strong> for every token in that document.</p>
+<blockquote class="blockquote">
+<p><strong>One-hot encoding</strong> is widely used outside NLP as well. Whenever you have a categorical variable (color, country, part-of-speech tag), one-hot encoding converts it into a binary vector that models can consume. The key trade-off: the vector length equals the number of categories, which can get very large.</p>
+</blockquote>
+<div id="l80k6yaga0i" class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build vocabulary from our corpus (same words CountVectorizer will find)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>all_tokens <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>(tok <span class="cf">for</span> doc <span class="kw">in</span> corpus <span class="cf">for</span> tok <span class="kw">in</span> tokenize(doc)))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> one_hot(word, vocabulary):</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One-hot vector: a single 1 at the word's position, zeros everywhere else."""</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    vec <span class="op">=</span> np.zeros(<span class="bu">len</span>(vocabulary), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> word <span class="kw">in</span> vocabulary:</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        vec[vocabulary.index(word)] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> vec</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># One-hot vectors for individual words</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Vocabulary: </span><span class="sc">{</span><span class="bu">len</span>(all_tokens)<span class="sc">}</span><span class="ss"> words</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> word <span class="kw">in</span> [<span class="st">"brilliant"</span>, <span class="st">"awful"</span>, <span class="st">"movie"</span>]:</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> all_tokens.index(word)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    vec <span class="op">=</span> one_hot(word, all_tokens)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  "</span><span class="sc">{</span>word<span class="sc">}</span><span class="ss">"  → position </span><span class="sc">{</span>idx<span class="sc">}</span><span class="ss">, vector has </span><span class="sc">{</span><span class="bu">len</span>(all_tokens)<span class="sc">}</span><span class="ss"> dims, 1 non-zero'</span>)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum of one-hots = count vector for a document</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">--- Summing one-hots for a document ---"</span>)</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>sentence <span class="op">=</span> <span class="st">"awful, just awful"</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>tokens <span class="op">=</span> tokenize(sentence)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Document: '</span><span class="sc">{</span>sentence<span class="sc">}</span><span class="ss">'"</span>)</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Tokens:    </span><span class="sc">{</span>tokens<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>doc_vector <span class="op">=</span> <span class="bu">sum</span>(one_hot(tok, all_tokens) <span class="cf">for</span> tok <span class="kw">in</span> tokens)</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>nonzero <span class="op">=</span> {all_tokens[i]: <span class="bu">int</span>(doc_vector[i]) <span class="cf">for</span> i <span class="kw">in</span> np.where(doc_vector <span class="op">&gt;</span> <span class="dv">0</span>)[<span class="dv">0</span>]}</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Sum of one-hots: </span><span class="sc">{</span>nonzero<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"'awful' appears twice → its count is 2. This is exactly a count vector!"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Vocabulary: 30 words
+
+  "brilliant"  → position 5, vector has 30 dims, 1 non-zero
+  "awful"  → position 3, vector has 30 dims, 1 non-zero
+  "movie"  → position 21, vector has 30 dims, 1 non-zero
+
+--- Summing one-hots for a document ---
+Document: 'awful, just awful'
+Tokens:    ['awful', 'awful']
+
+Sum of one-hots: {'awful': 2}
+'awful' appears twice → its count is 2. This is exactly a count vector!</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="step-2-count-vectorization-bag-of-words" class="level2">
+<h2 class="anchored" data-anchor-id="step-2-count-vectorization-bag-of-words">Step 2: Count Vectorization (Bag of Words)</h2>
+<p>The simplest text → vector mapping. Build a vocabulary from the entire corpus (each unique token becomes a column), then represent each document by counting how many times each vocabulary word appears.</p>
+<p>The result is a <strong>document-term matrix</strong>: rows = documents, columns = vocabulary words, values = counts.</p>
+<p>This representation is called “bag of words” because it discards word order entirely — only frequency survives the compression.</p>
+<div id="c-count-build" class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>count_vec <span class="op">=</span> CountVectorizer(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    tokenizer<span class="op">=</span>tokenize,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    token_pattern<span class="op">=</span><span class="va">None</span>   <span class="co"># use our spacy tokenizer, not sklearn's regex</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>X_counts <span class="op">=</span> count_vec.fit_transform(corpus)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>vocab <span class="op">=</span> count_vec.get_feature_names_out()</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Documents:       </span><span class="sc">{</span><span class="bu">len</span>(corpus)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Vocabulary size: </span><span class="sc">{</span><span class="bu">len</span>(vocab)<span class="sc">}</span><span class="ss"> unique tokens"</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Matrix shape:    </span><span class="sc">{</span>X_counts<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">  (documents × vocabulary)"</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Storage type:    </span><span class="sc">{</span><span class="bu">type</span>(X_counts)<span class="sc">.</span><span class="va">__name__</span><span class="sc">}</span><span class="ss"> (scipy sparse matrix)"</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Vocabulary:</span><span class="ch">\n</span><span class="ss">  </span><span class="sc">{</span><span class="bu">list</span>(vocab)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Documents:       10
+Vocabulary size: 30 unique tokens
+Matrix shape:    (10, 30)  (documents × vocabulary)
+Storage type:    csr_matrix (scipy sparse matrix)
+
+Vocabulary:
+  ['absolutely', 'acting', 'amazing', 'awful', 'boring', 'brilliant', 'cast', 'disappointing', 'entire', 'excellent', 'experience', 'film', 'finish', 'good', 'great', 'hat', 'heart', 'horrible', 'love', 'minute', 'move', 'movie', 'performance', 'predictable', 'start', 'story', 'terrible', 'time', 'waste', 'wonderful']</code></pre>
+</div>
+</div>
+<div id="e0494577-5f28-445d-ac05-f7fb1ba0ea1f" class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>count_vec.vocabulary_</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'love': 18,
+ 'movie': 21,
+ 'great': 14,
+ 'terrible': 26,
+ 'film': 11,
+ 'absolutely': 0,
+ 'horrible': 17,
+ 'acting': 1,
+ 'excellent': 9,
+ 'move': 20,
+ 'hat': 15,
+ 'minute': 19,
+ 'wonderful': 29,
+ 'experience': 10,
+ 'start': 24,
+ 'finish': 12,
+ 'boring': 4,
+ 'predictable': 23,
+ 'waste': 28,
+ 'time': 27,
+ 'amazing': 2,
+ 'performance': 22,
+ 'entire': 8,
+ 'cast': 6,
+ 'good': 13,
+ 'disappointing': 7,
+ 'brilliant': 5,
+ 'story': 25,
+ 'heart': 16,
+ 'awful': 3}</code></pre>
+</div>
+</div>
+<div id="152f2772-5c88-41f2-89f1-079cd960ffd8" class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to a DataFrame for easier labeling in Seaborn</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>df_counts <span class="op">=</span> pd.DataFrame(X_counts.toarray(), columns<span class="op">=</span>vocab)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">5</span>))</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>sns.heatmap(df_counts, annot<span class="op">=</span><span class="va">True</span>, cbar<span class="op">=</span><span class="va">False</span>, cmap<span class="op">=</span><span class="st">"YlGnBu"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Count Vectorizer Heatmap"</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_sparse_vectors_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="exercise-1" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-1">Exercise 1</h3>
+<p>Why does document 9 have a ‘2’ for ‘awful’?</p>
+<div id="da8d5412" class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>q1_answer <span class="op">=</span> <span class="st">""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="how-sparse-is-this-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="how-sparse-is-this-matrix">How sparse is this matrix?</h3>
+<p>If we stored the full matrix densely, every document would need a slot for every vocabulary word — even words that don’t appear. Let’s measure the waste.</p>
+<div id="c-sparsity" class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>total_entries <span class="op">=</span> X_counts.shape[<span class="dv">0</span>] <span class="op">*</span> X_counts.shape[<span class="dv">1</span>]</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>nonzero <span class="op">=</span> X_counts.nnz</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>zero <span class="op">=</span> total_entries <span class="op">-</span> nonzero</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total entries:    </span><span class="sc">{</span>total_entries<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Non-zero entries: </span><span class="sc">{</span>nonzero<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Zero entries:     </span><span class="sc">{</span>zero<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Sparsity:         </span><span class="sc">{</span>zero <span class="op">/</span> total_entries<span class="sc">:.1%}</span><span class="ss">"</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Dense storage:  </span><span class="sc">{</span>total_entries<span class="sc">}</span><span class="ss"> values"</span>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Sparse storage: ~</span><span class="sc">{</span>nonzero <span class="op">*</span> <span class="dv">2</span><span class="sc">}</span><span class="ss"> values (non-zero value + column index per entry)"</span>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Compression:     ~</span><span class="sc">{</span>total_entries <span class="op">/</span> (nonzero <span class="op">*</span> <span class="dv">2</span>)<span class="sc">:.1f}</span><span class="ss">× smaller"</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">In a real corpus with 50,000 words and 10,000 documents,"</span>)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"sparsity would be &gt;99% — sparse storage saves orders of magnitude."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Total entries:    300
+Non-zero entries: 30
+Zero entries:     270
+Sparsity:         90.0%
+
+Dense storage:  300 values
+Sparse storage: ~60 values (non-zero value + column index per entry)
+Compression:     ~5.0× smaller
+
+In a real corpus with 50,000 words and 10,000 documents,
+sparsity would be &gt;99% — sparse storage saves orders of magnitude.</code></pre>
+</div>
+</div>
+<div id="c-csr" class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Under the hood: scipy's Compressed Sparse Row (CSR) format</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Instead of a 2D grid of mostly zeros, it stores three arrays:</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"CSR stores only what's needed:</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  data:    </span><span class="sc">{</span>X_counts<span class="sc">.</span>data<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"           (</span><span class="sc">{</span><span class="bu">len</span>(X_counts.data)<span class="sc">}</span><span class="ss"> non-zero values)</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  indices: </span><span class="sc">{</span>X_counts<span class="sc">.</span>indices<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"           (which column each value belongs to)</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  indptr:  </span><span class="sc">{</span>X_counts<span class="sc">.</span>indptr<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"           (where each row starts in the data array)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CSR stores only what's needed:
+
+  data:    [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2]
+           (30 non-zero values)
+
+  indices: [18 21 14 26 11  0 17  1  9 20 15 19 29 10 24 12  4 23 28 27  2 22  8  6
+ 13  7  5 25 16  3]
+           (which column each value belongs to)
+
+  indptr:  [ 0  3  7 10 12 16 20 24 26 29 30]
+           (where each row starts in the data array)</code></pre>
+</div>
+</div>
+<p>To make sense of this, look at the index pointers i and i+1… for example, 0 and 3. This means document 1 uses the indices in positions 0,1,2 which are 18, 21, and 14. This means that document 0 has non-zero values at column 18, 21, and 14. You can see this visually in the document-term matrix.</p>
+<p>Let’s visualize this another way!</p>
+<div id="c-helper" class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> show_sparse_vector(vector, feature_names, label<span class="op">=</span><span class="st">""</span>):</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Display only the non-zero entries of a sparse or dense vector."""</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> issparse(vector):</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        vector <span class="op">=</span> vector.toarray().flatten()</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>        vector <span class="op">=</span> np.asarray(vector).flatten()</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    nonzero_idx <span class="op">=</span> np.where(np.<span class="bu">abs</span>(vector) <span class="op">&gt;</span> <span class="fl">1e-6</span>)[<span class="dv">0</span>]</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    entries <span class="op">=</span> {feature_names[i]: <span class="bu">round</span>(<span class="bu">float</span>(vector[i]), <span class="dv">4</span>) <span class="cf">for</span> i <span class="kw">in</span> nonzero_idx}</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    n_dims <span class="op">=</span> <span class="bu">len</span>(feature_names)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    n_nz <span class="op">=</span> <span class="bu">len</span>(entries)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> label:</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  Dimensions: </span><span class="sc">{</span>n_dims<span class="sc">}</span><span class="ss"> total, </span><span class="sc">{</span>n_nz<span class="sc">}</span><span class="ss"> non-zero (</span><span class="sc">{</span>n_nz<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>n_dims<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  Non-zero:   </span><span class="sc">{</span>entries<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> entries</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="c-inspect-doc" class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Inspect one document's representation</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>doc_idx <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Document: '</span><span class="sc">{</span>corpus[doc_idx]<span class="sc">}</span><span class="ss">'"</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Tokens:    </span><span class="sc">{</span>tokenize(corpus[doc_idx])<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>show_sparse_vector(X_counts[doc_idx], vocab, label<span class="op">=</span><span class="st">"Count vector:"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Document: 'I love this movie, it was great!'
+Tokens:    ['love', 'movie', 'great']
+
+  Count vector:
+  Dimensions: 30 total, 3 non-zero (3/30)
+  Non-zero:   {'great': 1.0, 'love': 1.0, 'movie': 1.0}</code></pre>
+</div>
+</div>
+</section>
+<section id="exercise-2" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-2">Exercise 2</h3>
+<p>Given these two sentences: “The audience hated the movie, but I loved it”, vs “I hated the movie, but the audience loved it”, what information did bag-of-words lose? What might be a downstream task where this would cause a wrong answer?</p>
+<div id="86e0751c" class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>q2_answer <span class="op">=</span> <span class="st">""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="step-3-tf-idf-weighted-sparse-vectors" class="level2">
+<h2 class="anchored" data-anchor-id="step-3-tf-idf-weighted-sparse-vectors">Step 3: TF-IDF — Weighted Sparse Vectors</h2>
+<p>Count vectors treat all words equally: “movie” appearing once gets the same count as “excellent” appearing once. But “excellent” is far more informative for sentiment — “movie” shows up in both positive and negative reviews.</p>
+<p><strong>TF-IDF</strong> (Term Frequency – Inverse Document Frequency) keeps the same sparse structure but reweights the values:</p>
+<ul>
+<li><strong>TF</strong> (Term Frequency): how often the word appears in <em>this</em> document (similar to the count)</li>
+<li><strong>IDF</strong> (Inverse Document Frequency): how rare the word is across <em>all</em> documents</li>
+</ul>
+<p>Words appearing in many documents get downweighted. Rare, distinctive words get upweighted. The zeros stay zero — same sparsity pattern, more informative values.</p>
+<section id="tf-idf-formulas" class="level3">
+<h3 class="anchored" data-anchor-id="tf-idf-formulas">TF-IDF Formulas</h3>
+<p>The formula for TF-IDF (Term Frequency-Inverse Document Frequency) is the product of two statistics, TF and IDF.</p>
+<p><strong>1. Term Frequency (TF):</strong> <span class="math display">\[\text{TF}(t, d) = \frac{\text{count of term } t \text{ in document } d}{\text{total number of terms in document } d}\]</span></p>
+<p><strong>2. Inverse Document Frequency (IDF):</strong> <span class="math display">\[\text{IDF}(t, D) = \log\left(\frac{N}{|\{d \in D : t \in d\}|}\right)\]</span></p>
+<p><code>IFD(t, D)</code> is a score for a specific term across the corpus where <code>N</code> is the corpus and the denominator is document frequency – count of how many individual documents <code>d</code> contain terms <code>t</code> at least once. So you take the total number of documents and divide the number that contain the word - and then take the logarithm of that result.</p>
+<p><strong>3. TF-IDF Score:</strong> <span class="math display">\[\text{TF-IDF}(t, d, D) = \text{TF}(t, d) \times \text{IDF}(t, D)\]</span></p>
+<div id="c-tfidf-build" class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>tfidf_vec <span class="op">=</span> TfidfVectorizer(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    tokenizer<span class="op">=</span>tokenize,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    token_pattern<span class="op">=</span><span class="va">None</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>X_tfidf <span class="op">=</span> tfidf_vec.fit_transform(corpus)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"TF-IDF matrix shape: </span><span class="sc">{</span>X_tfidf<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Non-zero entries:    </span><span class="sc">{</span>X_tfidf<span class="sc">.</span>nnz<span class="sc">}</span><span class="ss">  (same count as the count matrix)"</span>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Same sparsity pattern, different values."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>TF-IDF matrix shape: (10, 30)
+Non-zero entries:    30  (same count as the count matrix)
+Same sparsity pattern, different values.</code></pre>
+</div>
+</div>
+<div id="c-count-vs-tfidf" class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Side-by-side: count vs TF-IDF for the same document</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>doc_idx <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Document: '</span><span class="sc">{</span>corpus[doc_idx]<span class="sc">}</span><span class="ss">'</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>count_entries <span class="op">=</span> show_sparse_vector(X_counts[doc_idx], vocab, label<span class="op">=</span><span class="st">"Count vector:"</span>)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>tfidf_entries <span class="op">=</span> show_sparse_vector(X_tfidf[doc_idx], vocab, label<span class="op">=</span><span class="st">"TF-IDF vector:"</span>)</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">  </span><span class="sc">{</span><span class="st">'token'</span><span class="sc">:&lt;15}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'count'</span><span class="sc">:&gt;6}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'tf-idf'</span><span class="sc">:&gt;8}</span><span class="ss">"</span>)</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span><span class="st">'-'</span><span class="op">*</span><span class="dv">31</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> token <span class="kw">in</span> count_entries:</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> count_entries[token]</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> tfidf_entries.get(token, <span class="dv">0</span>)</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>token<span class="sc">:&lt;15}</span><span class="ss"> </span><span class="sc">{</span>c<span class="sc">:&gt;6}</span><span class="ss">  </span><span class="sc">{</span>t<span class="sc">:&gt;8.4f}</span><span class="ss">"</span>)</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">  Counts are all 1 (each word appeared once). TF-IDF values differ"</span>)</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"  because rarer words across the corpus receive higher weight."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Document: 'I love this movie, it was great!'
+
+  Count vector:
+  Dimensions: 30 total, 3 non-zero (3/30)
+  Non-zero:   {'great': 1.0, 'love': 1.0, 'movie': 1.0}
+
+  TF-IDF vector:
+  Dimensions: 30 total, 3 non-zero (3/30)
+  Non-zero:   {'great': 0.5774, 'love': 0.5774, 'movie': 0.5774}
+
+  token            count    tf-idf
+  -------------------------------
+  great              1.0    0.5774
+  love               1.0    0.5774
+  movie              1.0    0.5774
+
+  Counts are all 1 (each word appeared once). TF-IDF values differ
+  because rarer words across the corpus receive higher weight.</code></pre>
+</div>
+</div>
+<div id="c-bar-chart" class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visual comparison for one document</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>doc_idx <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>tokens <span class="op">=</span> <span class="bu">sorted</span>(count_entries.keys())</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>counts_vals <span class="op">=</span> [count_entries[t] <span class="cf">for</span> t <span class="kw">in</span> tokens]</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>tfidf_vals <span class="op">=</span> [tfidf_entries.get(t, <span class="dv">0</span>) <span class="cf">for</span> t <span class="kw">in</span> tokens]</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">3.5</span>))</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].barh(tokens, counts_vals, color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Count (Bag of Words)"</span>)</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Count"</span>)</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].barh(tokens, tfidf_vals, color<span class="op">=</span><span class="st">"darkorange"</span>)</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"TF-IDF (Weighted)"</span>)</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"TF-IDF Weight"</span>)</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="ss">f"Same document, two representations: '</span><span class="sc">{</span>corpus[doc_idx]<span class="sc">}</span><span class="ss">'"</span>, y<span class="op">=</span><span class="fl">1.02</span>)</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Counts are flat — every word looks equally important."</span>)</span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"TF-IDF differentiates: words unique to this document get higher weight."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_sparse_vectors_files/figure-html/cell-20-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Counts are flat — every word looks equally important.
+TF-IDF differentiates: words unique to this document get higher weight.</code></pre>
+</div>
+</div>
+<p>This approach tries to show that some words are more “informative” than others based on how rare they are in the entire collection.</p>
+<p>In a larger corpus, a common word like “movie” would receive a lower weight because it likely appears in almost every review.</p>
+<p>This visualization is trying to demonstrate that while the counts are “flat” (everyone gets a 1), TF-IDF differentiates the values. Even if the bars look similar in this small example, the TF-IDF values are actually calculated weights (around 0.5774 in this case) rather than simple counts. TF-IDF moves us away from just counting to “ranking” words by their importance to the text.</p>
+</section>
+<section id="exercise-3" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-3">Exercise 3</h3>
+<p>Why might the word “great”receive a higher weight in a large corpus than the word “movie”?</p>
+<div id="2a074e0a" class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>q3_answer <span class="op">=</span> <span class="st">""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="step-4-vader-a-dense-alternative" class="level2">
+<h2 class="anchored" data-anchor-id="step-4-vader-a-dense-alternative">Step 4: VADER — A Dense Alternative</h2>
+<p>Not all text representations are sparse. <strong>VADER</strong> (Valence Aware Dictionary and sEntiment Reasoner) is rule-based:</p>
+<ul>
+<li>A hand-crafted dictionary assigns sentiment scores to ~7,500 words</li>
+<li>Rules handle negation (“not good”), intensifiers (“very”), capitalization, punctuation</li>
+<li>Output: exactly <strong>4 numbers</strong> — negative, neutral, positive, compound</li>
+</ul>
+<p>This is a <strong>dense</strong> representation: no zeros, and always 4 dimensions regardless of vocabulary size. Extreme compression — but almost all word-level information is lost.</p>
+<div id="c-vader-demo" class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sid <span class="op">=</span> SentimentIntensityAnalyzer()</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> vader_scores(text):</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Return VADER sentiment scores as a dict."""</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sid.polarity_scores(text)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"VADER: any text → 4 numbers</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> text <span class="kw">in</span> corpus[:<span class="dv">4</span>]:</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> vader_scores(text)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  '</span><span class="sc">{</span>text<span class="sc">}</span><span class="ss">'"</span>)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   → neg=</span><span class="sc">{</span>scores[<span class="st">'neg'</span>]<span class="sc">:.3f}</span><span class="ss">  neu=</span><span class="sc">{</span>scores[<span class="st">'neu'</span>]<span class="sc">:.3f}</span><span class="ss">  "</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"pos=</span><span class="sc">{</span>scores[<span class="st">'pos'</span>]<span class="sc">:.3f}</span><span class="ss">  compound=</span><span class="sc">{</span>scores[<span class="st">'compound'</span>]<span class="sc">:+.4f}</span><span class="ch">\n</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>VADER: any text → 4 numbers
+
+  'I love this movie, it was great!'
+   → neg=0.000  neu=0.368  pos=0.632  compound=+0.8622
+
+  'terrible film, absolutely horrible'
+   → neg=0.775  neu=0.225  pos=0.000  compound=-0.7841
+
+  'the acting was excellent and moving'
+   → neg=0.000  neu=0.575  pos=0.425  compound=+0.5719
+
+  'I hated every minute of it'
+   → neg=0.457  neu=0.543  pos=0.000  compound=-0.6369
+</code></pre>
+</div>
+</div>
+<div id="c-dims" class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The dimensionality gap</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Dimensions per representation:</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  Count vector:  </span><span class="sc">{</span>X_counts<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">:&gt;4}</span><span class="ss"> dims  (one per vocabulary word)"</span>)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  TF-IDF vector: </span><span class="sc">{</span>X_tfidf<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">:&gt;4}</span><span class="ss"> dims  (same vocabulary)"</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  VADER:            4 dims  (fixed: neg, neu, pos, compound)"</span>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">For a real corpus with 50,000 unique words:"</span>)</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  Sparse vectors: 50,000 dims (but &gt;99% zeros → efficient storage)"</span>)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  VADER: still 4 dims (massive compression, massive information loss)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Dimensions per representation:
+
+  Count vector:    30 dims  (one per vocabulary word)
+  TF-IDF vector:   30 dims  (same vocabulary)
+  VADER:            4 dims  (fixed: neg, neu, pos, compound)
+
+For a real corpus with 50,000 unique words:
+  Sparse vectors: 50,000 dims (but &gt;99% zeros → efficient storage)
+  VADER: still 4 dims (massive compression, massive information loss)</code></pre>
+</div>
+</div>
+<section id="exercise-4" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-4">Exercise 4:</h3>
+<p>Make up a tricky sentence and use vader_scores() to score it. What sentence can you write that gives you a bad answer? Do you find VADER works fairly well or not?</p>
+<div id="e2cbcff0" class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>q4_answer <span class="op">=</span> <span class="st">""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="step-5-naive-bayes-on-count-vectors" class="level2">
+<h2 class="anchored" data-anchor-id="step-5-naive-bayes-on-count-vectors">Step 5: Naive Bayes on Count Vectors</h2>
+<p>Now we train classifiers and examine what they learn. <strong>Multinomial Naive Bayes</strong> takes count vectors as input and estimates:</p>
+<blockquote class="blockquote">
+<p>For each class (positive / negative), how likely is each word to appear?</p>
+</blockquote>
+<p>It builds a probability table P(word | class) for every word in the vocabulary. This is <strong>dense</strong> internally — every word gets a non-zero probability thanks to Laplace smoothing. Even words the model has never seen in a given class still get a small probability.</p>
+<p>The input is sparse (count vectors), but the learned representation is dense.</p>
+<div id="c-nb-train" class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>nb_model <span class="op">=</span> MultinomialNB()</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>nb_model.fit(X_counts, labels)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Learned word probabilities per class</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>nb_probs_pos <span class="op">=</span> np.exp(nb_model.feature_log_prob_[<span class="dv">1</span>])  <span class="co"># P(word | positive)</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>nb_probs_neg <span class="op">=</span> np.exp(nb_model.feature_log_prob_[<span class="dv">0</span>])  <span class="co"># P(word | negative)</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>nb_df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"word"</span>: vocab,</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"P(w|pos)"</span>: np.<span class="bu">round</span>(nb_probs_pos, <span class="dv">4</span>),</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"P(w|neg)"</span>: np.<span class="bu">round</span>(nb_probs_neg, <span class="dv">4</span>),</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>nb_df[<span class="st">"pos/neg ratio"</span>] <span class="op">=</span> np.<span class="bu">round</span>(nb_df[<span class="st">"P(w|pos)"</span>] <span class="op">/</span> nb_df[<span class="st">"P(w|neg)"</span>], <span class="dv">2</span>)</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>nb_df <span class="op">=</span> nb_df.sort_values(<span class="st">"pos/neg ratio"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Naive Bayes: learned P(word | class)</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(nb_df.to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Every word has a non-zero probability — the learned representation is dense."</span>)</span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Words with high pos/neg ratio are the strongest positive indicators."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Naive Bayes: learned P(word | class)
+
+         word  P(w|pos)  P(w|neg)  pos/neg ratio
+    wonderful    0.0426    0.0227           1.88
+        movie    0.0426    0.0227           1.88
+  performance    0.0426    0.0227           1.88
+         love    0.0426    0.0227           1.88
+        heart    0.0426    0.0227           1.88
+       acting    0.0426    0.0227           1.88
+        great    0.0426    0.0227           1.88
+        start    0.0426    0.0227           1.88
+       finish    0.0426    0.0227           1.88
+        story    0.0426    0.0227           1.88
+   experience    0.0426    0.0227           1.88
+    excellent    0.0426    0.0227           1.88
+       entire    0.0426    0.0227           1.88
+         cast    0.0426    0.0227           1.88
+    brilliant    0.0426    0.0227           1.88
+      amazing    0.0426    0.0227           1.88
+         move    0.0426    0.0227           1.88
+     terrible    0.0213    0.0455           0.47
+         time    0.0213    0.0455           0.47
+  predictable    0.0213    0.0455           0.47
+        waste    0.0213    0.0455           0.47
+   absolutely    0.0213    0.0455           0.47
+       minute    0.0213    0.0455           0.47
+     horrible    0.0213    0.0455           0.47
+         good    0.0213    0.0455           0.47
+         film    0.0213    0.0455           0.47
+disappointing    0.0213    0.0455           0.47
+       boring    0.0213    0.0455           0.47
+          hat    0.0213    0.0455           0.47
+        awful    0.0213    0.0682           0.31
+
+Every word has a non-zero probability — the learned representation is dense.
+Words with high pos/neg ratio are the strongest positive indicators.</code></pre>
+</div>
+</div>
+<div id="8b7ad375" class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> predict_sentiment(text):</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Classify a sentence as positive or negative using the trained NB model."""</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    vec <span class="op">=</span> count_vec.transform([text])</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>    label <span class="op">=</span> nb_model.predict(vec)[<span class="dv">0</span>]</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    proba <span class="op">=</span> nb_model.predict_proba(vec)[<span class="dv">0</span>]</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"text"</span>: text,</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sentiment"</span>: <span class="st">"positive"</span> <span class="cf">if</span> label <span class="op">==</span> <span class="dv">1</span> <span class="cf">else</span> <span class="st">"negative"</span>,</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"confidence"</span>: proba[label],</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"P(positive)"</span>: <span class="bu">round</span>(proba[<span class="dv">1</span>], <span class="dv">3</span>),</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"P(negative)"</span>: <span class="bu">round</span>(proba[<span class="dv">0</span>], <span class="dv">3</span>),</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>    }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="8eb4b9bb" class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Try it</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> s <span class="kw">in</span> [<span class="st">"I love this movie"</span>, <span class="st">"terrible and boring"</span>, <span class="st">"it was okay"</span>]:</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> predict_sentiment(s)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>result[<span class="st">'sentiment'</span>]<span class="sc">:&gt;8}</span><span class="ss"> (</span><span class="sc">{</span>result[<span class="st">'confidence'</span>]<span class="sc">:.1%}</span><span class="ss">)  '</span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">'"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>positive (77.8%)  'I love this movie'
+negative (82.0%)  'terrible and boring'
+negative (50.0%)  'it was okay'</code></pre>
+</div>
+</div>
+<section id="exercise-5" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-5">Exercise 5</h3>
+<p>Looking at nb_df, note how consistent the probabilities are for the words in this corpus. Why is this? What is the model doing?</p>
+<div id="4fd2da25" class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>q5_answer <span class="op">=</span> <span class="st">""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="step-6-logistic-regression-on-tf-idf-learned-sparsity" class="level2">
+<h2 class="anchored" data-anchor-id="step-6-logistic-regression-on-tf-idf-learned-sparsity">Step 6: Logistic Regression on TF-IDF — Learned Sparsity</h2>
+<p><strong>Logistic Regression</strong> learns a <strong>weight (coefficient)</strong> for each feature. Positive weights push the prediction toward positive, negative weights toward negative.</p>
+<p>With <strong>L1 regularization</strong> (“Lasso”), the model is penalized for having many non-zero weights. This forces unimportant weights to <em>exactly</em> zero — the model discovers which words matter and ignores the rest.</p>
+<p>Here is a short tutorial on Lasso regularization. https://thaddeus-segura.com/lasso-ridge/. Read through it, so that you understand what Lasso (L1) does.</p>
+<p>Logistic regression is demonstrating different kind of sparsity than from the examples above:</p>
+<ul>
+<li><strong>Input sparsity</strong> (count/TF-IDF): most documents don’t contain most words → structural zeros</li>
+<li><strong>Learned sparsity</strong> (L1): the model decides most words aren’t useful → learned zeros</li>
+</ul>
+<p>Contrast with Naive Bayes, where every word always gets a non-zero probability.</p>
+<p>For this toy corpus, we have only 10 samples. We will demonstrate a logistic regression model by using hand weights, instead of tuning a model via cross-validation.</p>
+<p>The goal is a demonstration of the sparcity concept when <strong>coefficients appear and disappear</strong> as we adjust two hyperparameters:</p>
+<ul>
+<li>The <strong>L1 hyperparameter</strong> will determine which words matter the most and <strong>force other weights to zero</strong>. It will zero out some of the features (words) to zero so that they contribute nothing to the prediction (vs L2 shrinking coefficients).</li>
+<li>The <strong>C hyperparameter</strong> is like a volume control that lets you tune penalty. Ordinarily, you wouldn’t touch this hyperparameter and instead do cross-validation.
+<ul>
+<li>Small C - heavy bias towards L1 with zero coefficients</li>
+<li>Big C - heavy bias away from L1 and bias towards non-zero coefficients</li>
+</ul></li>
+</ul>
+<div id="c-lr-train" class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>lr_model <span class="op">=</span> LogisticRegression(</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    penalty<span class="op">=</span><span class="st">"l1"</span>,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    solver<span class="op">=</span><span class="st">"liblinear"</span>,</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    C<span class="op">=</span><span class="fl">10.0</span>,              <span class="co"># regularization strength (smaller C = more sparsity)</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">42</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>lr_model.fit(X_tfidf, labels)</span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>lr_coefs <span class="op">=</span> lr_model.coef_[<span class="dv">0</span>]</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>lr_df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"word"</span>: vocab,</span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"coefficient"</span>: np.<span class="bu">round</span>(lr_coefs, <span class="dv">4</span>)</span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>}).sort_values(<span class="st">"coefficient"</span>, key<span class="op">=</span><span class="bu">abs</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Logistic Regression: learned weight per vocabulary word</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(lr_df.to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a>n_zero <span class="op">=</span> <span class="bu">int</span>(np.<span class="bu">sum</span>(np.<span class="bu">abs</span>(lr_coefs) <span class="op">&lt;</span> <span class="fl">1e-6</span>))</span>
+<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a>n_total <span class="op">=</span> <span class="bu">len</span>(lr_coefs)</span>
+<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span>n_zero<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span>n_total<span class="sc">}</span><span class="ss"> coefficients are exactly zero."</span>)</span>
+<span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"L1 regularization learned that only </span><span class="sc">{</span>n_total <span class="op">-</span> n_zero<span class="sc">}</span><span class="ss"> words matter."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Logistic Regression: learned weight per vocabulary word
+
+         word  coefficient
+        awful      -3.7018
+       minute      -3.5087
+        waste      -3.2676
+     terrible      -3.1018
+disappointing      -3.0661
+         good      -1.6122
+   absolutely      -1.2166
+          hat      -1.1696
+       boring      -1.1355
+     horrible      -0.7674
+  predictable      -0.7654
+         film      -0.6958
+         time      -0.6131
+    brilliant       0.1014
+        great       0.1014
+         move       0.1014
+        movie       0.0000
+      amazing       0.0000
+        story       0.0000
+        start       0.0000
+  performance       0.0000
+       entire       0.0000
+    excellent       0.0000
+         love       0.0000
+        heart       0.0000
+       acting       0.0000
+         cast       0.0000
+       finish       0.0000
+   experience       0.0000
+    wonderful       0.0000
+
+14 of 30 coefficients are exactly zero.
+L1 regularization learned that only 16 words matter.</code></pre>
+</div>
+</div>
+<div id="c-learned-sparsity-viz" class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare learned representations: NB (dense) vs LR (sparse)</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">5</span>))</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="co"># NB: log odds ratio</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>nb_log_ratio <span class="op">=</span> np.log(nb_probs_pos <span class="op">/</span> nb_probs_neg)</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>sorted_idx_nb <span class="op">=</span> np.argsort(nb_log_ratio)</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].barh(vocab[sorted_idx_nb], nb_log_ratio[sorted_idx_nb], color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Naive Bayes: log P(w|pos)/P(w|neg)"</span>)</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Log probability ratio"</span>)</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].axvline(x<span class="op">=</span><span class="dv">0</span>, color<span class="op">=</span><span class="st">"gray"</span>, linewidth<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a><span class="co"># LR: coefficients (many are zero with L1)</span></span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>sorted_idx_lr <span class="op">=</span> np.argsort(lr_coefs)</span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"firebrick"</span> <span class="cf">if</span> c <span class="op">&lt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="st">"steelblue"</span> <span class="cf">if</span> c <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="st">"lightgray"</span></span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>          <span class="cf">for</span> c <span class="kw">in</span> lr_coefs[sorted_idx_lr]]</span>
+<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].barh(vocab[sorted_idx_lr], lr_coefs[sorted_idx_lr], color<span class="op">=</span>colors)</span>
+<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Logistic Regression (L1): coefficients"</span>)</span>
+<span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Coefficient"</span>)</span>
+<span id="cb46-19"><a href="#cb46-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].axvline(x<span class="op">=</span><span class="dv">0</span>, color<span class="op">=</span><span class="st">"gray"</span>, linewidth<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb46-20"><a href="#cb46-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-21"><a href="#cb46-21" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Dense vs. Sparse Learned Representations"</span>, fontsize<span class="op">=</span><span class="dv">13</span>, y<span class="op">=</span><span class="fl">1.01</span>)</span>
+<span id="cb46-22"><a href="#cb46-22" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb46-23"><a href="#cb46-23" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb46-24"><a href="#cb46-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-25"><a href="#cb46-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Left (NB): every word has a non-zero value — dense learned representation."</span>)</span>
+<span id="cb46-26"><a href="#cb46-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Right (LR+L1): When gray bars are exactly zero — the model learned to ignore those words."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_sparse_vectors_files/figure-html/cell-30-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Left (NB): every word has a non-zero value — dense learned representation.
+Right (LR+L1): When gray bars are exactly zero — the model learned to ignore those words.</code></pre>
+</div>
+</div>
+<div id="bdb2664e-5945-4f66-931f-04de56c4c26a" class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> eli5</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>doc <span class="op">=</span> <span class="st">"I love this movie, it was great"</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>eli5.show_prediction(lr_model, doc, vec<span class="op">=</span>tfidf_vec)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+    <style>
+    table.eli5-weights tr:hover {
+        filter: brightness(85%);
+    }
+</style>
+
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+    
+
+    
+
+    
+
+    
+        
+
+    
+
+        
+            
+                
+                
+    
+        <p style="margin-bottom: 0.5em; margin-top: 0em">
+            <b>
+    
+        y=1
+    
+</b>
+
+    
+    (probability <b>0.827</b>, score <b>1.563</b>)
+
+top features
+        </p>
+    
+    
+<table class="eli5-weights table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header" style="border: none;">
+<th data-quarto-table-cell-role="th" style="text-align: right; padding: 0 1em 0 0.5em; border: none;" title="Feature contribution already accounts for the feature value (for linear models, contribution = weight * feature value), and the sum of feature contributions is equal to the score or, for some classifiers, to the probability. Feature values are shown if &quot;show_feature_values&quot; is True.">Contribution<sup>?</sup></th>
+<th data-quarto-table-cell-role="th" style="text-align: left; padding: 0 0.5em 0 0.5em; border: none;">Feature</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd" style="background-color: hsl(120, 100.00%, 80.00%); border: none;">
+<td style="text-align: right; padding: 0 1em 0 0.5em; border: none;">+1.505</td>
+<td style="text-align: left; padding: 0 0.5em 0 0.5em; border: none;">&lt;BIAS&gt;</td>
+</tr>
+<tr class="even" style="background-color: hsl(120, 100.00%, 97.94%); border: none;">
+<td style="text-align: right; padding: 0 1em 0 0.5em; border: none;">+0.059</td>
+<td style="text-align: left; padding: 0 0.5em 0 0.5em; border: none;">great</td>
+</tr>
+</tbody>
+</table>
+
+
+            
+        
+
+        
+
+
+
+    
+
+    
+
+    
+
+    
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+
+</div>
+</div>
+</div>
+<p>The ELI5 (Explain Like I’m 5) output is helpful to see how the Logistic Regression model reached its decision for the sentence: “I love this movie, it was great.”</p>
+<p>Here is how to interpret it.</p>
+<p>Prediction Summary: - <strong>y=1</strong>: This indicates the model predicted the “positive” class (where 1 = positive and 0 = negative). - <strong>Probability 0.827</strong>: The model is 82.7% confident that this review is positive. - <strong>Score 1.563</strong>: This is the raw output (logit) before it is converted into a probability. A positive score leads to a “positive” prediction.</p>
+<p>Top Features Table: - <bias> (+1.505): This is the model’s “starting point” or intercept. Even without looking at any specific words, the model has a baseline bias toward the positive class because this sentence was labeled positive. - great (+0.059): ELI5 identified “great” as a feature that contributed positively to the score. - Missing Words: Notice that “love” and “movie” are not listed. This is because the L1 regularization (seen in earlier cells) forced those specific coefficients to exactly zero, meaning the model learned to ignore them entirely when making a prediction.</bias></p>
+<p>In short, ELI5 shows that for this model, the word “great” was the only active evidence in the text pushing the prediction toward “positive,” supplemented by a strong baseline bias.</p>
+</section>
+<section id="exercise-6-which-word-survives-first" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-6-which-word-survives-first">Exercise 6: Which Word Survives First?</h2>
+<p>At C=0.01, L1 regularization zeros out every coefficient — the model predicts using only its intercept. As you increase C, you loosen the penalty, allowing the model to “spend” on coefficients that improve predictions.</p>
+<p>But words don’t all earn a coefficient at the same threshold. The model decides: <strong>which word is worth its L1 cost first?</strong></p>
+<p>Before running the code below, write down your predictions. Use the graphs above (from the original configuration with L1 and C=10.0) to help inform your answer. Then try commenting out both C and L1, separately.</p>
+<ol type="1">
+<li><p><strong>Which word will get a non-zero coefficient first?</strong> Look back at the corpus and the count matrix. What makes a word “worth it” — frequency? appearing in only one class? something else?</p></li>
+<li><p><strong>Will it be a positive word or a negative word?</strong> Think about what the intercept can do for free (without any coefficients), and what it <em>can’t</em> do alone.</p></li>
+<li><p><strong>What will happen to the intercept as coefficients start appearing?</strong> Will it stay near zero, go positive, or go negative?</p></li>
+</ol>
+<div id="ox1s10ffpz" class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sweep C from small to large — watch which words emerge and when</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>c_values <span class="op">=</span> [<span class="fl">0.01</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">3.0</span>, <span class="fl">4.0</span>, <span class="fl">5.0</span>, <span class="fl">6.0</span>, <span class="fl">7.0</span>, <span class="fl">8.0</span>, <span class="fl">10.0</span>, <span class="fl">15.0</span>]</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>prev_active <span class="op">=</span> <span class="bu">set</span>()</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'C'</span><span class="sc">:&gt;5}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'#nz'</span><span class="sc">:&gt;4}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'intercept'</span><span class="sc">:&gt;10}</span><span class="ss">  newly appeared"</span>)</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">70</span>)</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> C <span class="kw">in</span> c_values:</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> LogisticRegression(penalty<span class="op">=</span><span class="st">"l1"</span>, solver<span class="op">=</span><span class="st">"liblinear"</span>, C<span class="op">=</span>C, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    m.fit(X_tfidf, labels)</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    coefs <span class="op">=</span> m.coef_[<span class="dv">0</span>]</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>    active <span class="op">=</span> {vocab[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(coefs)) <span class="cf">if</span> <span class="bu">abs</span>(coefs[i]) <span class="op">&gt;</span> <span class="fl">1e-6</span>}</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>    new <span class="op">=</span> active <span class="op">-</span> prev_active</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    n_nz <span class="op">=</span> <span class="bu">len</span>(active)</span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> new:</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>        details <span class="op">=</span> <span class="st">", "</span>.join(</span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>            <span class="ss">f"</span><span class="sc">{</span>w<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>coefs[<span class="bu">list</span>(vocab).index(w)]<span class="sc">:+.3f}</span><span class="ss">)"</span></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> w <span class="kw">in</span> <span class="bu">sorted</span>(new, key<span class="op">=</span><span class="kw">lambda</span> w: coefs[<span class="bu">list</span>(vocab).index(w)])</span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>        details <span class="op">=</span> <span class="st">"—"</span></span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>C<span class="sc">:&gt;5.02f}</span><span class="ss">  </span><span class="sc">{</span>n_nz<span class="sc">:&gt;4}</span><span class="ss">  </span><span class="sc">{</span>m<span class="sc">.</span>intercept_[<span class="dv">0</span>]<span class="sc">:&gt;+10.4f}</span><span class="ss">  </span><span class="sc">{</span>details<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a>    prev_active <span class="op">=</span> active</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    C   #nz   intercept  newly appeared
+----------------------------------------------------------------------
+ 0.01     0     +0.0000  —
+ 0.50     0     +0.0000  —
+ 1.00     0     +0.0000  —
+ 2.00     0     +0.0000  —
+ 3.00     4     +0.0000  awful (-0.693), disappointing (-0.162), minute (-0.162), hat (-0.000)
+ 4.00    16     +0.1843  predictable (-0.278), good (-0.192), terrible (-0.178), film (-0.105), absolutely (-0.083), time (-0.036), boring (-0.035), waste (-0.020), horrible (-0.002), move (+0.148), brilliant (+0.148), great (+0.148)
+ 5.00    16     +0.5612  —
+ 6.00    16     +0.8342  —
+ 7.00    16     +1.0485  —
+ 8.00    16     +1.2248  —
+10.00    16     +1.5045  —
+15.00    16     +1.9816  —</code></pre>
+</div>
+</div>
+<section id="regularization-controls-sparsity" class="level3">
+<h3 class="anchored" data-anchor-id="regularization-controls-sparsity">Regularization controls sparsity</h3>
+<p>The <code>C</code> parameter in Logistic Regression controls how aggressively L1 pushes weights to zero. Smaller C = stronger regularization = more zeros = sparser model.</p>
+<div id="7cf2e8ac" class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># How C affects sparsity</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'C'</span><span class="sc">:&gt;8}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'Non-zero coefficients'</span><span class="sc">:&gt;22}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'Zero coefficients'</span><span class="sc">:&gt;18}</span><span class="ss">"</span>)</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">52</span>)</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> C <span class="kw">in</span> [<span class="fl">0.01</span>, <span class="fl">0.1</span>, <span class="fl">1.0</span>, <span class="fl">10.0</span>, <span class="fl">100.0</span>]:</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    lr_temp <span class="op">=</span> LogisticRegression(</span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>        penalty<span class="op">=</span><span class="st">"l1"</span>, solver<span class="op">=</span><span class="st">"liblinear"</span>, C<span class="op">=</span>C, random_state<span class="op">=</span><span class="dv">42</span></span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>    lr_temp.fit(X_tfidf, labels)</span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>    n_nz <span class="op">=</span> <span class="bu">int</span>(np.<span class="bu">sum</span>(np.<span class="bu">abs</span>(lr_temp.coef_[<span class="dv">0</span>]) <span class="op">&gt;</span> <span class="fl">1e-6</span>))</span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>    n_z <span class="op">=</span> <span class="bu">len</span>(lr_temp.coef_[<span class="dv">0</span>]) <span class="op">-</span> n_nz</span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>C<span class="sc">:&gt;8.2f}</span><span class="ss">  </span><span class="sc">{</span>n_nz<span class="sc">:&gt;22}</span><span class="ss">  </span><span class="sc">{</span>n_z<span class="sc">:&gt;18}</span><span class="ss">"</span>)</span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Smaller C → stronger penalty → more weights forced to zero → sparser model."</span>)</span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Larger C → weaker penalty → model is free to use all features."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       C   Non-zero coefficients   Zero coefficients
+----------------------------------------------------
+    0.01                       0                  30
+    0.10                       0                  30
+    1.00                       0                  30
+   10.00                      16                  14
+  100.00                      16                  14
+
+Smaller C → stronger penalty → more weights forced to zero → sparser model.
+Larger C → weaker penalty → model is free to use all features.</code></pre>
+</div>
+</div>
+</section>
+<section id="what-do-you-observe" class="level3">
+<h3 class="anchored" data-anchor-id="what-do-you-observe">What do you observe?</h3>
+<ul>
+<li><strong>Which word(s) appeared first?</strong> Was your prediction correct?</li>
+<li><strong>Were they positive or negative words?</strong> Why does that make sense given how the intercept works? (Hint: The intercept is where the prediction sees no useful words. The intercept is “free” — L1 doesn’t penalize it.)</li>
+<li><strong>How did the intercept change</strong> as the first coefficients appeared? Why did it shift in that direction?</li>
+</ul>
+</section>
+<section id="exercise" class="level3">
+<h3 class="anchored" data-anchor-id="exercise">Exercise</h3>
+<p>What do you need to do to make all coefficients 0 in the lr_model above?</p>
+<div id="e71ec1fa" class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>q6_answer <span class="op">=</span> <span class="st">""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="putting-it-all-together" class="level2">
+<h2 class="anchored" data-anchor-id="putting-it-all-together">Putting It All Together</h2>
+<p>Let’s trace new sentences through every representation to see how the same text looks under each approach.</p>
+<div id="c-compare-fn" class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compare_representations(sentence):</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Show all representations for a sentence, side by side."""</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Input: '</span><span class="sc">{</span>sentence<span class="sc">}</span><span class="ss">'"</span>)</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">70</span>)</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Tokenization</span></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>    tokens <span class="op">=</span> tokenize(sentence)</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">1. Tokens: </span><span class="sc">{</span>tokens<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   </span><span class="sc">{</span><span class="bu">len</span>(sentence)<span class="sc">}</span><span class="ss"> characters → </span><span class="sc">{</span><span class="bu">len</span>(tokens)<span class="sc">}</span><span class="ss"> tokens"</span>)</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Count vector</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>    vec_count <span class="op">=</span> count_vec.transform([sentence])</span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">2. Count Vector (Bag of Words):"</span>)</span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>    show_sparse_vector(vec_count, vocab)</span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. TF-IDF vector</span></span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a>    vec_tfidf <span class="op">=</span> tfidf_vec.transform([sentence])</span>
+<span id="cb54-18"><a href="#cb54-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">3. TF-IDF Vector (Weighted):"</span>)</span>
+<span id="cb54-19"><a href="#cb54-19" aria-hidden="true" tabindex="-1"></a>    show_sparse_vector(vec_tfidf, vocab)</span>
+<span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. VADER</span></span>
+<span id="cb54-22"><a href="#cb54-22" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> vader_scores(sentence)</span>
+<span id="cb54-23"><a href="#cb54-23" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">4. VADER (Dense, 4-dim):"</span>)</span>
+<span id="cb54-24"><a href="#cb54-24" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  neg=</span><span class="sc">{</span>scores[<span class="st">'neg'</span>]<span class="sc">:.3f}</span><span class="ss">  neu=</span><span class="sc">{</span>scores[<span class="st">'neu'</span>]<span class="sc">:.3f}</span><span class="ss">  "</span></span>
+<span id="cb54-25"><a href="#cb54-25" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"pos=</span><span class="sc">{</span>scores[<span class="st">'pos'</span>]<span class="sc">:.3f}</span><span class="ss">  compound=</span><span class="sc">{</span>scores[<span class="st">'compound'</span>]<span class="sc">:+.4f}</span><span class="ss">"</span>)</span>
+<span id="cb54-26"><a href="#cb54-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-27"><a href="#cb54-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 5. Model predictions</span></span>
+<span id="cb54-28"><a href="#cb54-28" aria-hidden="true" tabindex="-1"></a>    nb_prob <span class="op">=</span> nb_model.predict_proba(vec_count)[<span class="dv">0</span>][<span class="dv">1</span>]</span>
+<span id="cb54-29"><a href="#cb54-29" aria-hidden="true" tabindex="-1"></a>    lr_prob <span class="op">=</span> lr_model.predict_proba(vec_tfidf)[<span class="dv">0</span>][<span class="dv">1</span>]</span>
+<span id="cb54-30"><a href="#cb54-30" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">5. Predictions:"</span>)</span>
+<span id="cb54-31"><a href="#cb54-31" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   Naive Bayes P(positive):        </span><span class="sc">{</span>nb_prob<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb54-32"><a href="#cb54-32" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   Logistic Regression P(positive): </span><span class="sc">{</span>lr_prob<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb54-33"><a href="#cb54-33" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   VADER compound:                  </span><span class="sc">{</span>scores[<span class="st">'compound'</span>]<span class="sc">:+.4f}</span><span class="ss">"</span>)</span>
+<span id="cb54-34"><a href="#cb54-34" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="c-compare-run" class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>test_sentences <span class="op">=</span> [</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"This movie was great but the ending was horrible"</span>,</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"An excellent and moving performance"</span>,</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"It was okay, nothing special"</span>,</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Absolutely terrible waste of time"</span>,</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> sentence <span class="kw">in</span> test_sentences:</span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>    compare_representations(sentence)</span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Input: 'This movie was great but the ending was horrible'
+======================================================================
+
+1. Tokens: ['movie', 'great', 'ending', 'horrible']
+   48 characters → 4 tokens
+
+2. Count Vector (Bag of Words):
+  Dimensions: 30 total, 3 non-zero (3/30)
+  Non-zero:   {'great': 1.0, 'horrible': 1.0, 'movie': 1.0}
+
+3. TF-IDF Vector (Weighted):
+  Dimensions: 30 total, 3 non-zero (3/30)
+  Non-zero:   {'great': 0.5774, 'horrible': 0.5774, 'movie': 0.5774}
+
+4. VADER (Dense, 4-dim):
+  neg=0.332  neu=0.490  pos=0.178  compound=-0.4939
+
+5. Predictions:
+   Naive Bayes P(positive):        0.621
+   Logistic Regression P(positive): 0.754
+   VADER compound:                  -0.4939
+
+
+Input: 'An excellent and moving performance'
+======================================================================
+
+1. Tokens: ['excellent', 'move', 'performance']
+   35 characters → 3 tokens
+
+2. Count Vector (Bag of Words):
+  Dimensions: 30 total, 3 non-zero (3/30)
+  Non-zero:   {'excellent': 1.0, 'move': 1.0, 'performance': 1.0}
+
+3. TF-IDF Vector (Weighted):
+  Dimensions: 30 total, 3 non-zero (3/30)
+  Non-zero:   {'excellent': 0.5774, 'move': 0.5774, 'performance': 0.5774}
+
+4. VADER (Dense, 4-dim):
+  neg=0.000  neu=0.519  pos=0.481  compound=+0.5719
+
+5. Predictions:
+   Naive Bayes P(positive):        0.868
+   Logistic Regression P(positive): 0.827
+   VADER compound:                  +0.5719
+
+
+Input: 'It was okay, nothing special'
+======================================================================
+
+1. Tokens: ['okay', 'special']
+   28 characters → 2 tokens
+
+2. Count Vector (Bag of Words):
+  Dimensions: 30 total, 0 non-zero (0/30)
+  Non-zero:   {}
+
+3. TF-IDF Vector (Weighted):
+  Dimensions: 30 total, 0 non-zero (0/30)
+  Non-zero:   {}
+
+4. VADER (Dense, 4-dim):
+  neg=0.315  neu=0.419  pos=0.265  compound=-0.0920
+
+5. Predictions:
+   Naive Bayes P(positive):        0.500
+   Logistic Regression P(positive): 0.818
+   VADER compound:                  -0.0920
+
+
+Input: 'Absolutely terrible waste of time'
+======================================================================
+
+1. Tokens: ['absolutely', 'terrible', 'waste', 'time']
+   33 characters → 4 tokens
+
+2. Count Vector (Bag of Words):
+  Dimensions: 30 total, 4 non-zero (4/30)
+  Non-zero:   {'absolutely': 1.0, 'terrible': 1.0, 'time': 1.0, 'waste': 1.0}
+
+3. TF-IDF Vector (Weighted):
+  Dimensions: 30 total, 4 non-zero (4/30)
+  Non-zero:   {'absolutely': 0.5, 'terrible': 0.5, 'time': 0.5, 'waste': 0.5}
+
+4. VADER (Dense, 4-dim):
+  neg=0.683  neu=0.317  pos=0.000  compound=-0.7559
+
+5. Predictions:
+   Naive Bayes P(positive):        0.046
+   Logistic Regression P(positive): 0.069
+   VADER compound:                  -0.7559
+
+</code></pre>
+</div>
+</div>
+<section id="what-happens-with-unknown-words" class="level3">
+<h3 class="anchored" data-anchor-id="what-happens-with-unknown-words">What happens with unknown words?</h3>
+<p>When a word wasn’t in the training corpus, count and TF-IDF vectorizers simply ignore it — it doesn’t have a column in the vocabulary. VADER can still score it if it’s in VADER’s dictionary. This is a fundamental limitation of vocabulary-based sparse representations.</p>
+<div id="c-oov-demo" class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A sentence with many out-of-vocabulary words</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>oov_sentence <span class="op">=</span> <span class="st">"The cinematography was breathtaking and sublime"</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>compare_representations(oov_sentence)</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Note: words not in the training vocabulary disappear from count/TF-IDF vectors."</span>)</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"VADER can still score them if they're in its own dictionary."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Input: 'The cinematography was breathtaking and sublime'
+======================================================================
+
+1. Tokens: ['cinematography', 'breathtake', 'sublime']
+   47 characters → 3 tokens
+
+2. Count Vector (Bag of Words):
+  Dimensions: 30 total, 0 non-zero (0/30)
+  Non-zero:   {}
+
+3. TF-IDF Vector (Weighted):
+  Dimensions: 30 total, 0 non-zero (0/30)
+  Non-zero:   {}
+
+4. VADER (Dense, 4-dim):
+  neg=0.000  neu=0.625  pos=0.375  compound=+0.4588
+
+5. Predictions:
+   Naive Bayes P(positive):        0.500
+   Logistic Regression P(positive): 0.818
+   VADER compound:                  +0.4588
+
+Note: words not in the training vocabulary disappear from count/TF-IDF vectors.
+VADER can still score them if they're in its own dictionary.</code></pre>
+</div>
+</div>
+</section>
+<section id="exercise-7" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-7">Exercise 7</h3>
+<p>What is the term used when a word is unknown?</p>
+<div id="f4d98514" class="cell">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>q7_answer <span class="op">=</span> <span class="st">""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="key-takeaways" class="level2">
+<h2 class="anchored" data-anchor-id="key-takeaways">Key Takeaways</h2>
+<p><strong>What is a sparse vector?</strong> A vector where most entries are zero. For text, this arises naturally because any single document uses a tiny fraction of the total vocabulary.</p>
+<p><strong>Why sparsity = compression.</strong> A document with 20 unique words in a 10,000-word vocabulary needs to store only ~20 values, not 10,000. Scipy’s CSR format exploits this by recording only (position, value) pairs for non-zero entries.</p>
+<p><strong>What gets lost?</strong> Bag-of-words representations discard word order — “dog bites man” and “man bites dog” produce identical vectors. They also lose syntax, context, and nuance. Only word identity and frequency survive.</p>
+<p><strong>Count vs.&nbsp;TF-IDF.</strong> Same sparsity structure (same zeros), different values. TF-IDF downweights words that appear everywhere and upweights distinctive words — a better signal for classifiers.</p>
+<p><strong>Dense vs.&nbsp;sparse.</strong> VADER compresses any text into 4 numbers — extreme compression, no vocabulary dependence, but nearly all word-level detail is gone. Count/TF-IDF vectors are high-dimensional but sparse and preserve word-level information.</p>
+<p><strong>Learned sparsity.</strong> L1 regularization lets Logistic Regression discover which features don’t matter and zero them out. This is compression learned from data, not just a structural property of the input. Naive Bayes, by contrast, always produces dense parameter estimates.</p>
+<p><strong>Beyond sparse vectors.</strong> Dense embeddings (Word2Vec, GloVe, BERT) – which we will explore in a couple of weeks – address many limitations of sparse representations by learning compact, dense vectors where semantically similar words land near each other. But sparse vectors remain valuable as interpretable, efficient baselines — and the concepts of compression, dimensionality, and sparsity transfer directly to understanding those richer representations.</p>
+<div id="7774778a-59d0-4c85-b5c5-2296660942fe" class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>q8_answer <span class="op">=</span> <span class="st">"What did you find most interesting about this lab"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="e71d9c7e" class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>q9_answer <span class="op">=</span> <span class="st">"what did you find that was surprising?"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="f6969d8b" class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="co"># REVIEW ONLY — does not submit</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data401_nlp.helpers.submit <span class="im">import</span> collect_answers, parse_answers, submit_answers</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data401_nlp.helpers.env <span class="im">import</span> load_env</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>load_env()</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a><span class="co"># REVIEW ONLY — does not submit</span></span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> collect_answers(</span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>    show<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>    namespace<span class="op">=</span><span class="bu">globals</span>(),   </span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a>answers <span class="op">=</span> parse_answers(raw)</span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Detected </span><span class="sc">{</span><span class="bu">len</span>(answers)<span class="sc">}</span><span class="ss"> answers:"</span>)</span>
+<span id="cb62-17"><a href="#cb62-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> answers:</span>
+<span id="cb62-18"><a href="#cb62-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">" "</span>, k)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="8d939523" class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>ALLOW_SUBMISSION <span class="op">=</span> <span class="va">False</span>   <span class="co"># ← student MUST change this</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> submit_for_credit(student_id):</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> ALLOW_SUBMISSION:</span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">RuntimeError</span>(</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">"⚠️ Submission is disabled.</span><span class="ch">\n\n</span><span class="st">"</span></span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>            <span class="st">"To submit:</span><span class="ch">\n</span><span class="st">"</span></span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>            <span class="st">"  1. Set ALLOW_SUBMISSION = True</span><span class="ch">\n</span><span class="st">"</span></span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">"  2. Re-run this cell"</span></span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a>    submit_answers(</span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a>        student_id<span class="op">=</span>student_id,</span>
+<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a>        answers<span class="op">=</span>answers,   <span class="co"># uses reviewed answers</span></span>
+<span id="cb63-15"><a href="#cb63-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb63-16"><a href="#cb63-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-17"><a href="#cb63-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"✅ Submission complete."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="1eed1204" class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>submit_answers(<span class="st">"your name"</span>, answers<span class="op">=</span>answers)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/su-dataAI/data401-nlp/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

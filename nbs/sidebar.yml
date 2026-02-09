@@ -7,7 +7,9 @@ website:
       - 02_eda_spacy.ipynb
       - 03_eda_spacy_part2.ipynb
       - 03_regex.ipynb
-      - 99_helpers_test.ipynb
+      - 03_zero_frequency_compression_unigrams_bigrams.ipynb
+      - 04_sparse_vectors.ipynb
+        99_helpers_test.ipynb
       - 99_platform_test.ipynb
       - section: helpers
         contents:

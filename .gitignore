@@ -19,6 +19,7 @@ tags
 *.sh
 .pre-commit-config.yaml
 .mcp.json
+.jupyter_ystore.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
